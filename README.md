@@ -38,14 +38,13 @@ URL parameters are considered `true` unless explicitly set to `false`.
 Parameters that appear multiple times are collected into a string array.
   - `?tags=a&tags=b` → `['a', 'b']`
 
-## Documenting Args
+## Documenting Arguments
 
 UrlArgs can also generate a table of the parameters and their descriptions in the console:
 
 ```javascript
 args.describe( {
 	count: 'The number of items to display',
-	enabled: 'Whether the items are enabled',
 	name: 'The name of the items',
 	tags: 'Tags for filtering the items',
 } );
@@ -55,8 +54,8 @@ Console output:
 
 ```
 urlargs:
-number  | count   | default: 10        | The number of items to display
-boolean | enabled | default: true      | Whether the items are enabled
-string  | name    | default: "test"    | The name of the items
-object  | tags    | default: ["a","b"] | Tags for filtering the items
+number  | count   | default: 10        | Number of items
+string  | name    | default: "test"    | Name of items
+object  | tags    | default: ["a","b"] | Tags for filtering items
+boolean | enabled | default: true
 ```
