@@ -1,0 +1,13 @@
+{
+  "name": "urlargs",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint . --fix"
+  },
+  "devDependencies": {
+    "eslint": "^9.27.0",
+    "eslint-config-gmb": "^0.11.0"
+  }
+}
