@@ -1,6 +1,6 @@
 # urlargs
 
-Typed utility for parsing URL query parameters.
+Lightweight, type-safe utility for parsing URL query parameters.
 
 ## Usage
 

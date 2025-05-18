@@ -1,14 +1,10 @@
 {
   "name": "urlargs",
   "version": "1.0.0",
-  "description": "A lightweight, typed utility for parsing and working with URL query parameters in the browser",
+  "description": "Lightweight, type-safe utility for parsing URL query parameters.",
   "author": "George Michael Brower",
   "license": "MIT",
   "type": "module",
-  "main": "dist/urlargs.js",
-  "module": "dist/urlargs.js",
-  "types": "dist/urlargs.d.ts",
-  "source": "./urlargs.ts",
   "exports": {
     ".": {
       "import": "./dist/urlargs.js",
@@ -29,14 +25,6 @@
     "lint": "eslint . --fix",
     "test": "vitest run --environment jsdom"
   },
-  "keywords": [
-    "url",
-    "query",
-    "parameters",
-    "args",
-    "browser",
-    "typescript"
-  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/georgealways/urlargs.git"
