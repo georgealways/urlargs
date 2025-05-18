@@ -11,7 +11,9 @@ export class UrlArgs<T extends Record<string, any>> {
 	private readonly defaults: T;
 	constructor( defaults: T ) {
 		this.defaults = defaults;
-		this.urlSearchParams = new URLSearchParams( window.location.search );
+		// Use a more environment-agnostic approach to get URL parameters
+		const searchParams = typeof window !== 'undefined' ? window.location.search : '';
+		this.urlSearchParams = new URLSearchParams( searchParams );
 	}
 
 	/**

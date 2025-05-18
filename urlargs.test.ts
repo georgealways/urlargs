@@ -1,22 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { UrlArgs } from './urlargs';
+import { UrlArgs } from './dist/urlargs.js';
 
 describe( 'UrlArgs', () => {
+
+	// mock window object if it doesn't exist
 	beforeEach( () => {
-		// mock window.location.search
-		Object.defineProperty( window, 'location', {
-			value: {
-				search: ''
-			},
-			writable: true
-		} );
+		if ( typeof window === 'undefined' ) {
+			vi.stubGlobal( 'window', { location: { search: '' } } );
+		} else {
+			Object.defineProperty( window, 'location', {
+				value: { search: '' },
+				writable: true,
+			} );
+		}
 	} );
 
 	it( 'should return default values when no URL parameters exist', () => {
 		const defaults = { count: 10, enabled: true, name: 'test' };
 		const args = new UrlArgs( defaults );
-
 		expect( args.get() ).toEqual( defaults );
 	} );
 
@@ -48,7 +50,6 @@ describe( 'UrlArgs', () => {
 		const defaults = { count: 10, enabled: true, name: 'test' };
 		const args = new UrlArgs( defaults );
 
-		// mock console.log
 		const consoleSpy = vi.spyOn( console, 'log' );
 
 		const descriptions = {
@@ -59,10 +60,8 @@ describe( 'UrlArgs', () => {
 
 		args.describe( descriptions );
 
-		// verify console.log was called
 		expect( consoleSpy ).toHaveBeenCalled();
-
-		// restore console.log
 		consoleSpy.mockRestore();
 	} );
+
 } );
