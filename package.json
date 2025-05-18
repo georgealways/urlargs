@@ -8,7 +8,7 @@
   "main": "dist/urlargs.js",
   "module": "dist/urlargs.js",
   "types": "dist/urlargs.d.ts",
-  "source": "urlargs.ts",
+  "source": "./urlargs.ts",
   "exports": {
     ".": {
       "import": "./dist/urlargs.js",
@@ -19,7 +19,8 @@
   "files": [
     "dist",
     "urlargs.ts",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc urlargs.ts --target esnext --declaration --outDir ./dist",
@@ -38,7 +39,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/georgebrower/urlargs.git"
+    "url": "https://github.com/georgealways/urlargs.git"
   },
   "devDependencies": {
     "eslint": "^9.27.0",

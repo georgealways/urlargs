@@ -67,9 +67,7 @@ export class UrlArgs<T extends Record<string, any>> {
 	 */
 	describe( descriptions: Partial<Record<keyof T, string>> ): void {
 		const keys = Object.keys( descriptions );
-
 		const rows: string[][] = [];
-
 		for ( const key of keys ) {
 			const description = descriptions[ key ] || '';
 			const type = typeof this.defaults[ key ];
