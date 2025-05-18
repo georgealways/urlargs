@@ -2,12 +2,15 @@
   "name": "urlargs",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.js",
+  "main": "urlargs.js",
   "scripts": {
-    "lint": "eslint . --fix"
+    "lint": "eslint . --fix",
+    "test": "vitest run --environment jsdom"
   },
   "devDependencies": {
     "eslint": "^9.27.0",
-    "eslint-config-gmb": "^0.11.0"
+    "eslint-config-gmb": "^0.11.0",
+    "jsdom": "^24.0.0",
+    "vitest": "^1.4.0"
   }
 }
