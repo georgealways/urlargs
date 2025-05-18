@@ -20,7 +20,7 @@
     "dist",
     "urlargs.ts",
     "README.md",
-    "LICENSE"
+    "LICENSE.md"
   ],
   "scripts": {
     "build": "tsc urlargs.ts --target esnext --declaration --outDir ./dist",
