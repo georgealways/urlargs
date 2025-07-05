@@ -59,10 +59,4 @@ args.describe( {
 
 Console output:
 
-```
-URL Arguments: ?count=10&name=test&tags=a&tags=b
-count    10         Number of items
-name     "test"     Name of items
-tags     ["a","b"]  Tags for filtering items
-enabled  true
-```
+![alt text](https://github.com/georgealways/urlargs/raw/main/screenshot.png "URL Arguments")
