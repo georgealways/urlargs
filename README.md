@@ -15,11 +15,11 @@ const args = new UrlArgs( {
 	tags: [ 'a', 'b' ],
 } );
 
-// URL = website.com/?enabled&count=20
+// URL = website.com/?count=20&enabled=false
 // get typed parameters based on the defaults
 const { count, enabled, name, tags } = args.values;
 
-console.log( enabled ); // true
+console.log( enabled ); // false
 console.log( count );   // 20
 console.log( name );    // 'test'
 console.log( tags );    // ['a', 'b']
@@ -50,10 +50,11 @@ Parameters that appear multiple times are collected into a string array.
 UrlArgs can also generate a table of the parameters and their descriptions in the console:
 
 ```javascript
+
 args.describe( {
 	count: 'The number of items to display',
+	enabled: 'Whether the items are enabled',
 	name: 'The name of the items',
-	tags: 'Tags for filtering the items',
 } );
 ```
 
