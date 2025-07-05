@@ -6,9 +6,34 @@
 	<title>urlargs test</title>
 </head>
 <body>
-	Open console to see available arguments.
+
+	<!-- None -->
+	<p>
+		None: <a href="?">
+			/?
+		</a>
+	</p>
+
+	<!-- Short -->
+	<p>
+		Short: <a href="?count=20&enabled=false">
+			/?count=20&enabled=false
+		</a>
+	</p>
+
+	<!-- Long -->
+	<p>
+		Long: <a href="?count=20&enabled=false&name=urlargs&tags=b&tags=c">
+			/?count=20&enabled=false&name=urlargs&tags=b&tags=c
+		</a>
+	</p>
+
+	<hr>
+
+	<p>Click the links to change the URL arguments. Open your console to see argument descriptions.</p>
+
 	<script type="module">
-			import { UrlArgs } from './dist/urlargs.js';
+			import { UrlArgs } from './urlargs.ts';
 
 			const defaults = {
 				count: 10,
@@ -23,7 +48,6 @@
 				count: 'The number of items to display',
 				enabled: 'Whether the items are enabled',
 				name: 'The name of the items',
-				tags: 'Tags to filter by',
 			} );
 		</script>
 </body>

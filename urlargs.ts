@@ -1,4 +1,29 @@
 /**
+ * CSS styles for the description table columns.
+ */
+export type UrlArgsColors = {
+	key: string;
+	type: string;
+	default: string;
+	description: string;
+};
+
+/**
+ * Options for the UrlArgs class.
+ */
+export type UrlArgsOptions = {
+	/**
+	 * Whether to print the description table with colors in the console.
+	 * @default true
+	 */
+	color?: boolean;
+	/**
+	 * CSS styles for the description table columns.
+	 */
+	colors?: Partial<UrlArgsColors>;
+};
+
+/**
  * A class for parsing and describing URL arguments.
  * @template T - The type of the object to parse the URL arguments into.
  * @example
@@ -7,25 +32,22 @@
  * console.log( result ); // { count: 20, enabled: false, name: 'urlargs' }
  */
 export class UrlArgs<T extends Record<string, any>> {
+
 	private readonly urlSearchParams: URLSearchParams;
 	private readonly defaults: T;
-	constructor( defaults: T ) {
+	private readonly options: UrlArgsOptions;
+
+	readonly values: T;
+
+	constructor( defaults: T, options: UrlArgsOptions = {} ) {
 		this.defaults = defaults;
-		// Use a more environment-agnostic approach to get URL parameters
+		this.options = { color: true, ...options };
 		const searchParams = typeof window !== 'undefined' ? window.location.search : '';
 		this.urlSearchParams = new URLSearchParams( searchParams );
+		this.values = this.getValues();
 	}
 
-	/**
-	 * Get the URL arguments as an object.
-	 * @returns An object containing the URL arguments.
-	 * @example
-	 * // URL: /?count=20&enabled=false&name=urlargs
-	 * const args = new UrlArgs( { count: 10, enabled: true, name: 'test' } );
-	 * const result = args.get();
-	 * console.log( result ); // { count: 20, enabled: false, name: 'urlargs' }
-	 */
-	get(): T {
+	private getValues(): T {
 		const result = { ...this.defaults };
 
 		for ( const [ key, value ] of this.urlSearchParams.entries() ) {
@@ -53,7 +75,7 @@ export class UrlArgs<T extends Record<string, any>> {
 	 * Describe the URL arguments in a table format.
 	 * @param descriptions - An object mapping keys to descriptions.
 	 * @example
-	 * const args = new UrlArgs( { count: 10, enabled: true, name: 'test' } );
+	 * const args = new UrlArgs( { count: 10, enabled: true, name: 'test', tags: [ 'a', 'b' ] } );
 	 * args.describe( {
 	 *  count: 'The number of items to display',
 	 *  enabled: 'Whether the items are enabled',
@@ -61,31 +83,43 @@ export class UrlArgs<T extends Record<string, any>> {
 	 * } );
 	 *
 	 * // Output:
-	 * // count   | number  | (default: 10)   | The number of items to display
-	 * // enabled | boolean | (default: true) | Whether the items are enabled
-	 * // name    | string  | (default: test) | The name of the items
+	 * // count    10         The number of items to display
+	 * // enabled  true       Whether the items are enabled
+	 * // name     "test"     The name of the items
+	 * // tags     ["a","b"]
 	 */
-	describe( descriptions: Partial<Record<keyof T, string>> ): void {
-		const keys = Object.keys( descriptions );
+	public describe( descriptions: Partial<Record<keyof T, string>> ): void {
+		const keys = Object.keys( this.defaults );
 		const rows: string[][] = [];
+		const styles: string[][] = [];
 		for ( const key of keys ) {
 			const description = descriptions[ key ] || '';
-			const type = typeof this.defaults[ key ];
 			const defaultValue = this.defaults[ key ];
+			// const type = Array.isArray( defaultValue ) ? 'array' : typeof defaultValue;
+			const value = this.values[ key ];
 			const cols: string[] = [
-				type,
 				key,
-				`default: ${JSON.stringify( defaultValue )}`,
+				// type,
+				JSON.stringify( value ),
 				description,
 			];
+			styles.push( [
+				'font-weight: bold;',
+				// 'color: #999;',
+				defaultValue !== value ? 'font-weight: bold; color: #f70;' : '',
+				'color: #999;',
+			] );
 			rows.push( cols );
 		}
-
-		console.log( 'urlargs:' );
-		this.printTable( rows );
+		console.log(
+			'URL Arguments: %c%s',
+			'font-style: italic;',
+			this.urlSearchParams.toString() || 'defaults'
+		);
+		this.printTable( rows, styles );
 	}
 
-	private printTable( rows: string[][] ): void {
+	private printTable( rows: string[][], styles: string[][] ): void {
 		const colWidths: number[] = [];
 		for ( const row of rows ) {
 			for ( let c = 0; c < row.length; c++ ) {
@@ -95,14 +129,20 @@ export class UrlArgs<T extends Record<string, any>> {
 				}
 			}
 		}
-		for ( const row of rows ) {
-			const line: string[] = [];
-			for ( let c = 0; c < row.length; c++ ) {
-				const cell = row[ c ];
+
+		rows.forEach( ( row, i ) => {
+			const rowStyles = styles[ i ];
+
+			const lineParts = row.map( ( cell, c ) => {
 				const padding = colWidths[ c ] - cell.length;
-				line.push( `${cell}${ ' '.repeat( padding ) }` );
-			}
-			console.log( line.join( ' | ' ) );
-		}
+				const paddedCell = `${cell}${ ' '.repeat( padding ) }`;
+				return `%c${paddedCell}`;
+			} );
+
+			const line = lineParts.join( '  ' );
+
+			console.log( line, ...rowStyles );
+		} );
 	}
+
 }
