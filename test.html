@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>urlargs test</title>
+</head>
+<body>
+	open console
+	<script type="module">
+			import { UrlArgs } from './dist/urlargs.js';
+
+			const defaults = {
+				count: 10,
+				enabled: true,
+				name: 'test',
+				tags: [ 'a', 'b' ],
+			};
+
+			const args = new UrlArgs( defaults );
+
+			args.describe( {
+				count: 'The number of items to display',
+				enabled: 'Whether the items are enabled',
+				name: 'The name of the items',
+				tags: 'Tags to filter by',
+			} );
+
+			console.log( 'parsed args:', args.get() );
+		</script>
+</body>
+</html>

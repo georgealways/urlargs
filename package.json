@@ -23,6 +23,7 @@
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build && npm run test",
     "lint": "eslint . --fix",
+    "preview": "vite",
     "test": "vitest run --environment jsdom"
   },
   "repository": {
@@ -34,6 +35,7 @@
     "eslint-config-gmb": "^0.11.0",
     "jsdom": "^24.0.0",
     "typescript": "^5.4.2",
-    "vitest": "^1.4.0"
+    "vite": "^7.0.2",
+    "vitest": "^3.2.4"
   }
 }
