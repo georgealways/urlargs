@@ -20,7 +20,6 @@
   ],
   "scripts": {
     "build": "tsc urlargs.ts --target esnext --declaration --outDir ./dist",
-    "check": "tsc --noEmit",
     "clean": "rm -rf dist",
     "dev": "vite",
     "prepublishOnly": "npm run clean && npm run build && npm run test",

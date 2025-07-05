@@ -59,7 +59,7 @@ export class UrlArgs<T extends Record<string, any>> {
 			const type = typeof defaultValue;
 
 			if ( type === 'boolean' )
-				assign( value !== 'false' );
+				assign( value !== 'false' && value !== '0' );
 			else if ( type === 'number' )
 				assign( Number( value ) );
 			else if ( Array.isArray( defaultValue ) )

@@ -19,7 +19,24 @@ describe( 'UrlArgs', () => {
 	it( 'should return default values when no URL parameters exist', () => {
 		const defaults = { count: 10, enabled: true, name: 'test' };
 		const args = new UrlArgs( defaults );
-		expect( args.get() ).toEqual( defaults );
+		expect( args.values ).toEqual( defaults );
+	} );
+
+	it( 'should handle boolean parameters', () => {
+		const defaults = { enabled: true };
+		let args = new UrlArgs( defaults );
+
+		window.location.search = '?enabled=false';
+		args = new UrlArgs( defaults );
+		expect( args.values ).toEqual( { enabled: false } );
+
+		window.location.search = '?enabled=true';
+		args = new UrlArgs( defaults );
+		expect( args.values ).toEqual( { enabled: true } );
+
+		window.location.search = '?enabled=0';
+		args = new UrlArgs( defaults );
+		expect( args.values ).toEqual( { enabled: false } );
 	} );
 
 	it( 'should parse URL parameters and override defaults', () => {
@@ -28,7 +45,7 @@ describe( 'UrlArgs', () => {
 		const defaults = { count: 10, enabled: true, name: 'test' };
 		const args = new UrlArgs( defaults );
 
-		expect( args.get() ).toEqual( {
+		expect( args.values ).toEqual( {
 			count: 20,
 			enabled: false,
 			name: 'urlargs',
@@ -41,7 +58,7 @@ describe( 'UrlArgs', () => {
 		const defaults = { tags: [] };
 		const args = new UrlArgs( defaults );
 
-		expect( args.get() ).toEqual( {
+		expect( args.values ).toEqual( {
 			tags: [ 'javascript', 'typescript' ]
 		} );
 	} );
