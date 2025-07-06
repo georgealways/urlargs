@@ -13,10 +13,9 @@ export class UrlArgs<T extends Record<string, any>> {
 
 	readonly values: T;
 
-	constructor( defaults: T ) {
+	constructor( defaults: T, search = window.location.search ) {
 		this.defaults = defaults;
-		const searchParams = typeof window !== 'undefined' ? window.location.search : '';
-		this.urlSearchParams = new URLSearchParams( searchParams );
+		this.urlSearchParams = new URLSearchParams( search );
 		this.values = this.getValues();
 	}
 
@@ -81,17 +80,16 @@ export class UrlArgs<T extends Record<string, any>> {
 				description,
 			];
 			styles.push( [
-				'font-weight: bold;',
-				'color: #999;',
-				defaultValue !== value ? 'font-weight: bold; color: #f70;' : '',
-				'color: #999;',
+				'font-weight: bold',
+				'color: #999',
+				defaultValue !== value ? 'font-weight: bold; color: #f70' : '',
+				'color: #999',
 			] );
 			rows.push( cols );
 		}
 		console.log(
-			'URL Arguments: %c%s',
+			`%cURL Arguments: ${this.urlSearchParams.toString() || 'defaults'}`,
 			'font-style: italic;',
-			this.urlSearchParams.toString() || 'defaults'
 		);
 		this.printTable( rows, styles );
 	}
