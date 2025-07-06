@@ -1,29 +1,4 @@
 /**
- * CSS styles for the description table columns.
- */
-export type UrlArgsColors = {
-	key: string;
-	type: string;
-	default: string;
-	description: string;
-};
-
-/**
- * Options for the UrlArgs class.
- */
-export type UrlArgsOptions = {
-	/**
-	 * Whether to print the description table with colors in the console.
-	 * @default true
-	 */
-	color?: boolean;
-	/**
-	 * CSS styles for the description table columns.
-	 */
-	colors?: Partial<UrlArgsColors>;
-};
-
-/**
  * A class for parsing and describing URL arguments.
  * @template T - The type of the object to parse the URL arguments into.
  * @example
@@ -35,25 +10,25 @@ export class UrlArgs<T extends Record<string, any>> {
 
 	private readonly urlSearchParams: URLSearchParams;
 	private readonly defaults: T;
-	private readonly options: UrlArgsOptions;
 
 	readonly values: T;
 
-	constructor( defaults: T, options: UrlArgsOptions = {} ) {
+	constructor( defaults: T ) {
 		this.defaults = defaults;
-		this.options = { color: true, ...options };
 		const searchParams = typeof window !== 'undefined' ? window.location.search : '';
 		this.urlSearchParams = new URLSearchParams( searchParams );
 		this.values = this.getValues();
 	}
 
 	private getValues(): T {
-		const result = { ...this.defaults };
+
+		const values = { ...this.defaults };
 
 		for ( const [ key, value ] of this.urlSearchParams.entries() ) {
+
 			if ( !( key in this.defaults ) ) continue;
 
-			const assign = ( v: any ) => result[ key as keyof T ] = v;
+			const assign = ( v: any ) => values[ key as keyof T ] = v;
 
 			const defaultValue = this.defaults[ key as keyof T ];
 			const type = typeof defaultValue;
@@ -66,9 +41,11 @@ export class UrlArgs<T extends Record<string, any>> {
 				assign( this.urlSearchParams.getAll( key ) );
 			else
 				assign( value );
+
 		}
 
-		return result;
+		return values;
+
 	}
 
 	/**
@@ -95,17 +72,17 @@ export class UrlArgs<T extends Record<string, any>> {
 		for ( const key of keys ) {
 			const description = descriptions[ key ] || '';
 			const defaultValue = this.defaults[ key ];
-			// const type = Array.isArray( defaultValue ) ? 'array' : typeof defaultValue;
+			const type = Array.isArray( defaultValue ) ? 'array' : typeof defaultValue;
 			const value = this.values[ key ];
-			const cols: string[] = [
+			const cols = [
 				key,
-				// type,
+				type,
 				JSON.stringify( value ),
 				description,
 			];
 			styles.push( [
 				'font-weight: bold;',
-				// 'color: #999;',
+				'color: #999;',
 				defaultValue !== value ? 'font-weight: bold; color: #f70;' : '',
 				'color: #999;',
 			] );
