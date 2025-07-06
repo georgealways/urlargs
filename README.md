@@ -1,6 +1,6 @@
 # urlargs
 
-Lightweight, type-safe utility for parsing URL query parameters.
+Utility for parsing URL query parameters with types.
 
 ## Usage
 
@@ -34,16 +34,15 @@ URL parameters are considered `true` if set to any of the following:
 
 ## Arrays
 
-> [!WARNING]
-> Arrays are NOT comma-separated!
 
 Parameters that appear multiple times are collected into a string array.
 
 ✅ `?tags=a&tags=b` → `['a', 'b']`
 
-The following will NOT work:
-
-❌ `?tags=a,b` 
+> [!WARNING]
+> Arrays are NOT comma-separated! The following will NOT work:
+> 
+> ❌ `?tags=a,b` 
 
 
 
