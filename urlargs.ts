@@ -69,15 +69,18 @@ export class UrlArgs<T extends Record<string, any>> {
 		const rows: string[][] = [];
 		const styles: string[][] = [];
 		for ( const key of keys ) {
-			const description = descriptions[ key ] || '';
+			let description = descriptions[ key ] || '';
 			const defaultValue = this.defaults[ key ];
 			const type = Array.isArray( defaultValue ) ? 'array' : typeof defaultValue;
 			const value = this.values[ key ];
+			if ( defaultValue !== value ) {
+				description += ' (default: ' + JSON.stringify( defaultValue ) + ')';
+			}
 			const cols = [
 				key,
 				type,
 				JSON.stringify( value ),
-				description,
+				description.trim(),
 			];
 			styles.push( [
 				'font-weight: bold',
