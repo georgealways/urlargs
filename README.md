@@ -36,13 +36,13 @@ URL parameters are considered `true` if set to any of the following:
 
 > [!NOTE]
 > Parameters that appear multiple times are collected into a string array.
-> ✅ `?tags=a&tags=b` → `['a', 'b']`
+>
+> `?tags=a&tags=b` → `['a', 'b']`
 
 > [!CAUTION]
 > Arrays are NOT comma-separated! The following will NOT work:
+>
 > `?tags=a,b` → `['a,b']`
-
-
 
 ## Documenting arguments
 
