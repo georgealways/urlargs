@@ -1,7 +1,7 @@
 {
   "name": "urlargs",
-  "version": "1.0.0",
-  "description": "Lightweight, type-safe utility for parsing URL query parameters.",
+  "version": "0.1.0",
+  "description": "Utility for parsing URL query parameters with types.",
   "author": "George Michael Brower",
   "license": "MIT",
   "type": "module",
