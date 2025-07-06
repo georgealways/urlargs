@@ -59,6 +59,6 @@ args.describe( {
 } );
 ```
 
-Console output:
+This will produce output like this in the browser console. Values that differ from the defaults will be highlighted.
 
 ![alt text](https://github.com/georgealways/urlargs/raw/main/screenshot.png "URL Arguments")

@@ -59,10 +59,10 @@ export class UrlArgs<T extends Record<string, any>> {
 	 * } );
 	 *
 	 * // Output:
-	 * // count    10         The number of items to display
-	 * // enabled  true       Whether the items are enabled
-	 * // name     "test"     The name of the items
-	 * // tags     ["a","b"]
+	 * // count    number   10         The number of items to display
+	 * // enabled  boolean  true       Whether the items are enabled
+	 * // name     string   "test"     The name of the items
+	 * // tags     array    ["a","b"]
 	 */
 	public describe( descriptions: Partial<Record<keyof T, string>> ): void {
 		const keys = Object.keys( this.defaults );
