@@ -34,7 +34,7 @@ URL parameters are considered `true` if set to any of the following:
 
 ## Arrays
 
-> [!NOTE]
+> [!TIP]
 > Parameters that appear multiple times are collected into a string array.
 >
 > `?tags=a&tags=b` → `['a', 'b']`
