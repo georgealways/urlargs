@@ -1,10 +1,9 @@
 /**
- * A class for parsing and describing URL arguments.
- * @template T - The type of the object to parse the URL arguments into.
- * @example
+ * Parses URL query parameters into a typed object.
+ * ```ts
  * const args = new UrlArgs( { count: 10, enabled: true, name: 'test' } );
- * const result = args.get();
- * console.log( result ); // { count: 20, enabled: false, name: 'urlargs' }
+ * const { count, enabled, name } = args.values;
+ * ```
  */
 export class UrlArgs<T extends Record<string, any>> {
 
@@ -49,20 +48,20 @@ export class UrlArgs<T extends Record<string, any>> {
 
 	/**
 	 * Describe the URL arguments in a table format.
-	 * @param descriptions - An object mapping keys to descriptions.
-	 * @example
-	 * const args = new UrlArgs( { count: 10, enabled: true, name: 'test', tags: [ 'a', 'b' ] } );
-	 * args.describe( {
-	 *  count: 'The number of items to display',
-	 *  enabled: 'Whether the items are enabled',
-	 *  name: 'The name of the items',
+	 * ```ts
+	 * const args = new UrlArgs( {
+	 *   count: 10,
+	 *   enabled: true,
+	 *   name: 'test',
+	 *   tags: [ 'a', 'b' ]
 	 * } );
 	 *
-	 * // Output:
-	 * // count    number   10         The number of items to display
-	 * // enabled  boolean  true       Whether the items are enabled
-	 * // name     string   "test"     The name of the items
-	 * // tags     array    ["a","b"]
+	 * args.describe( {
+	 *   count: 'The number of items to display',
+	 *   enabled: 'Whether the items are enabled',
+	 *   name: 'The name of the items'
+	 * } );
+	 * ```
 	 */
 	public describe( descriptions: Partial<Record<keyof T, string>> ): void {
 		const keys = Object.keys( this.defaults );
@@ -74,21 +73,20 @@ export class UrlArgs<T extends Record<string, any>> {
 			const type = Array.isArray( defaultValue ) ? 'array' : typeof defaultValue;
 			const value = this.values[ key ];
 			if ( defaultValue !== value ) {
-				description += ' (default: ' + JSON.stringify( defaultValue ) + ')';
+				description += ` (default: ${JSON.stringify( defaultValue )})`;
 			}
-			const cols = [
+			rows.push( [
 				key,
 				type,
 				JSON.stringify( value ),
 				description.trim(),
-			];
+			] );
 			styles.push( [
 				'font-weight: bold',
 				'color: #999',
 				defaultValue !== value ? 'font-weight: bold; color: #f70' : '',
 				'color: #999',
 			] );
-			rows.push( cols );
 		}
 		console.log(
 			`%cURL Arguments: ${this.urlSearchParams.toString() || 'defaults'}`,
@@ -110,15 +108,12 @@ export class UrlArgs<T extends Record<string, any>> {
 
 		rows.forEach( ( row, i ) => {
 			const rowStyles = styles[ i ];
-
 			const lineParts = row.map( ( cell, c ) => {
 				const padding = colWidths[ c ] - cell.length;
 				const paddedCell = `${cell}${ ' '.repeat( padding ) }`;
 				return `%c${paddedCell}`;
 			} );
-
 			const line = lineParts.join( '  ' );
-
 			console.log( line, ...rowStyles );
 		} );
 	}
