@@ -18,22 +18,19 @@ const args = new UrlArgs( {
 // URL = website.com/?count=20&enabled=false
 // get typed parameters based on the defaults
 const { count, enabled, name, tags } = args.values;
-
-console.log( enabled ); // false
-console.log( count );   // 20
-console.log( name );    // 'test'
-console.log( tags );    // ['a', 'b']
 ```
 
 ## Booleans
 
-URL parameters are considered `true` unless explicitly set to `false` or `0`.
+URL parameters are considered `true` if set to any of the following:
   - ✅ `?enabled`
-  - ✅ `?enabled=true`  
-  - ✅ `?enabled=1`  
-  - ✅ `?enabled=anything`
+  - ✅ `?enabled=true`
+  - ✅ `?enabled=TRUE`
+  - ✅ `?enabled=1`
   - ❌ `?enabled=false`
+  - ❌ `?enabled=FALSE`
   - ❌ `?enabled=0`
+  - ❌ `?enabled=anythingElse`
 
 ## Arrays
 
@@ -41,16 +38,20 @@ URL parameters are considered `true` unless explicitly set to `false` or `0`.
 > Arrays are NOT comma-separated!
 
 Parameters that appear multiple times are collected into a string array.
-  - `?tags=a&tags=b` → `['a', 'b']`
+
+✅ `?tags=a&tags=b` → `['a', 'b']`
+
+The following will NOT work:
+
+❌ `?tags=a,b` 
 
 
 
-## Documenting Arguments
+## Documenting arguments
 
 UrlArgs can also generate a table of the parameters and their descriptions in the console:
 
-```javascript
-
+```ts
 args.describe( {
 	count: 'The number of items to display',
 	enabled: 'Whether the items are enabled',

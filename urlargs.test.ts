@@ -23,20 +23,24 @@ describe( 'UrlArgs', () => {
 	} );
 
 	it( 'should handle boolean parameters', () => {
-		const defaults = { enabled: true };
-		let args = new UrlArgs( defaults );
+		const defaults = { enabled: false };
+		let args: UrlArgs<typeof defaults>;
 
-		window.location.search = '?enabled=false';
-		args = new UrlArgs( defaults );
-		expect( args.values ).toEqual( { enabled: false } );
+		const test = ( str: string, expected: boolean ) => {
+			window.location.search = str;
+			args = new UrlArgs( defaults );
+			expect( args.values, str ).toEqual( { enabled: expected } );
+		};
 
-		window.location.search = '?enabled=true';
-		args = new UrlArgs( defaults );
-		expect( args.values ).toEqual( { enabled: true } );
+		test( '?enabled', true );
+		test( '?enabled=true', true );
+		test( '?enabled=TRUE', true );
+		test( '?enabled=1', true );
 
-		window.location.search = '?enabled=0';
-		args = new UrlArgs( defaults );
-		expect( args.values ).toEqual( { enabled: false } );
+		test( '?enabled=false', false );
+		test( '?enabled=FALSE', false );
+		test( '?enabled=0', false );
+		test( '?enabled=anythingElse', false );
 	} );
 
 	it( 'should parse URL parameters and override defaults', () => {
