@@ -5,6 +5,8 @@
   "author": "George Michael Brower",
   "license": "MIT",
   "type": "module",
+  "main": "./dist/urlargs.js",
+  "types": "./dist/urlargs.d.ts",
   "exports": {
     ".": {
       "import": "./dist/urlargs.js",
