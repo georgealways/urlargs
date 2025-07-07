@@ -63,7 +63,7 @@ export class UrlArgs<T extends Record<string, any>> {
 	 * } );
 	 * ```
 	 */
-	public describe( descriptions: Partial<Record<keyof T, string>> ): void {
+	public describe( descriptions: Partial<Record<keyof T, string>> = {} ): void {
 		const keys = Object.keys( this.defaults );
 		const rows: string[][] = [];
 		const styles: string[][] = [];
@@ -109,7 +109,7 @@ export class UrlArgs<T extends Record<string, any>> {
 		rows.forEach( ( row, i ) => {
 			const rowStyles = styles[ i ];
 			const lineParts = row.map( ( cell, c ) => {
-				const padding = colWidths[ c ] - cell.length;
+				const padding = ( colWidths[ c ] ?? 0 ) - cell.length;
 				const paddedCell = `${cell}${ ' '.repeat( padding ) }`;
 				return `%c${paddedCell}`;
 			} );

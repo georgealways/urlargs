@@ -85,4 +85,16 @@ describe( 'UrlArgs', () => {
 		consoleSpy.mockRestore();
 	} );
 
+	it( 'should not throw when describing a table with uneven rows', () => {
+		const defaults = {
+			name: 'test',
+			description: null,
+		};
+
+		const args = new UrlArgs( defaults, '' );
+		const consoleSpy = vi.spyOn( console, 'log' );
+		expect( () => args.describe( {} ) ).not.toThrow();
+		consoleSpy.mockRestore();
+	} );
+
 } );
