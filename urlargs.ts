@@ -99,7 +99,7 @@ export class UrlArgs<T extends Record<string, any>> {
 		const colWidths: number[] = [];
 		for ( const row of rows ) {
 			for ( let c = 0; c < row.length; c++ ) {
-				const cellWidth = row[ c ].length;
+				const cellWidth = row[ c ]?.length ?? 0;
 				if ( !colWidths[ c ] || cellWidth > colWidths[ c ] ) {
 					colWidths[ c ] = cellWidth;
 				}
