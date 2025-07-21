@@ -78,7 +78,7 @@ export class UrlArgs<T extends Record<string, any>> {
 			rows.push( [
 				key,
 				type,
-				JSON.stringify( value ),
+				this.truncate( JSON.stringify( value ) ),
 				description.trim(),
 			] );
 			styles.push( [
@@ -88,11 +88,11 @@ export class UrlArgs<T extends Record<string, any>> {
 				'color: #999',
 			] );
 		}
-		console.log(
-			`%cURL Arguments: ${this.urlSearchParams.toString() || 'defaults'}`,
-			'font-style: italic;',
-		);
 		this.printTable( rows, styles );
+	}
+
+	private truncate( str: string, maxLength = 40 ): string {
+		return str.length > maxLength ? str.substring( 0, maxLength ) + '…' : str;
 	}
 
 	private printTable( rows: string[][], styles: string[][] ): void {
