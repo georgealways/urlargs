@@ -23,20 +23,25 @@
   "scripts": {
     "build": "tsc urlargs.ts --target esnext --declaration --outDir ./dist",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run clean && npm run build && npm run test",
+    "prepublishOnly": "npm run clean && npm run build && npm run test && npm run test:types",
     "lint": "eslint . --fix",
     "test": "vitest run --environment jsdom",
+    "test:types": "tsd",
     "dev": "concurrently \"npm run build -- -w\" \"npm run test -- -w\" \"vite --clearScreen false\""
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/georgealways/urlargs.git"
   },
+  "tsd": {
+    "directory": "."
+  },
   "devDependencies": {
     "concurrently": "^9.2.0",
     "eslint": "^9.27.0",
     "eslint-config-gmb": "^0.11.0",
     "jsdom": "^24.0.0",
+    "tsd": "^0.32.0",
     "typescript": "^5.4.2",
     "vite": "^7.0.2",
     "vitest": "^3.2.4"
