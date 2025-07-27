@@ -104,6 +104,13 @@ describe( 'UrlArgs', () => {
 		consoleSpy.mockRestore();
 	} );
 
+	it( 'should handle transforming values to a custom type', () => {
+		type MyType = { a: number, b: number };
+		window.location.search = '?myObj={"a":1,"b":2}';
+		const args = new UrlArgs( { myObj: ( value: string ) => JSON.parse( value ) as MyType } );
+		expect( args.values.myObj ).toEqual( { a: 1, b: 2 } );
+	} );
+
 	it( 'should not throw when describing a table with uneven rows', () => {
 		const defaults = {
 			name: 'test',

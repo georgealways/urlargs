@@ -50,6 +50,23 @@ Parameters that appear multiple times are collected into a string array.
 
 `?tags=a,b` → `['a,b']`
 
+## Transforming values
+
+You can provide a function to transform the value before it is assigned to the argument.
+
+```ts
+const args = new UrlArgs( {
+	count: 10,
+	myObj: ( value: string ) => JSON.parse( value ),
+} );
+
+// URL = website.com/?count=20&myObj={"a":1,"b":2}
+const { count, myObj } = args.values;
+
+// typeof myObj === 'object'
+```
+
+
 ## Documenting arguments
 
 UrlArgs can also generate a table of the parameters and their descriptions in the console:

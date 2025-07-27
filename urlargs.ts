@@ -1,3 +1,7 @@
+type UnwrapFunctions<T> = {
+	[K in keyof T]: T[K] extends ( v: string ) => infer R ? R : T[K];
+};
+
 /**
  * Parses URL query parameters into a typed object.
  * ```ts
@@ -10,7 +14,7 @@ export class UrlArgs<T extends Record<string, any>> {
 	private readonly urlSearchParams: URLSearchParams;
 	private readonly defaults: T;
 
-	readonly values: T;
+	readonly values: UnwrapFunctions<T>;
 
 	constructor( defaults: T, search = window.location.search ) {
 		this.defaults = defaults;
@@ -58,6 +62,8 @@ export class UrlArgs<T extends Record<string, any>> {
 				assign( this.urlSearchParams.getAll( key ) );
 			else if ( type === 'string' )
 				assign( stringValue );
+			else if ( type === 'function' )
+				assign( defaultValue( stringValue ) );
 			else
 				throw new Error( `Unsupported type for ${key}: ${type}` );
 
