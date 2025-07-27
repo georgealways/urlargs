@@ -18,27 +18,48 @@ export class UrlArgs<T extends Record<string, any>> {
 		this.values = this.getValues();
 	}
 
+	static readonly trueValues = [ 'true', '1', '' ];
+	static readonly falseValues = [ 'false', '0' ];
+	static readonly booleanValues = [ ...UrlArgs.trueValues, ...UrlArgs.falseValues ];
+
+	static validateBoolean( value: string ): boolean {
+		return UrlArgs.booleanValues.includes( value.toLowerCase() );
+	}
+
+	static validateNumber( value: string ): boolean {
+		return !isNaN( Number( value ) );
+	}
+
 	private getValues(): T {
 
 		const values = { ...this.defaults };
 
-		for ( const [ key, value ] of this.urlSearchParams.entries() ) {
+		for ( const [ key, stringValue ] of this.urlSearchParams.entries() ) {
 
 			if ( !( key in this.defaults ) ) continue;
-
-			const assign = ( v: any ) => values[ key as keyof T ] = v;
 
 			const defaultValue = this.defaults[ key as keyof T ];
 			const type = typeof defaultValue;
 
+			const assign = ( parsedValue: any, validator?: ( v: string ) => boolean ) => {
+				if ( !validator || validator( stringValue ) ) {
+					values[ key as keyof T ] = parsedValue;
+				} else {
+					console.warn( `Invalid URL argument for ${key} [${type}]: "${stringValue}"` );
+					console.warn( `Using default value: ${JSON.stringify( defaultValue )}` );
+				}
+			};
+
 			if ( type === 'boolean' )
-				assign( value.toLowerCase() === 'true' || value === '1' || value === '' );
+				assign( UrlArgs.trueValues.includes( stringValue.toLowerCase() ), UrlArgs.validateBoolean );
 			else if ( type === 'number' )
-				assign( Number( value ) );
+				assign( Number( stringValue ), UrlArgs.validateNumber );
 			else if ( Array.isArray( defaultValue ) )
 				assign( this.urlSearchParams.getAll( key ) );
+			else if ( type === 'string' )
+				assign( stringValue );
 			else
-				assign( value );
+				throw new Error( `Unsupported type for ${key}: ${type}` );
 
 		}
 

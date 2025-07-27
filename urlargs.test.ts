@@ -36,11 +36,30 @@ describe( 'UrlArgs', () => {
 		test( '?enabled=true', true );
 		test( '?enabled=TRUE', true );
 		test( '?enabled=1', true );
+		test( '?enabled=', true );
 
 		test( '?enabled=false', false );
 		test( '?enabled=FALSE', false );
 		test( '?enabled=0', false );
-		test( '?enabled=anythingElse', false );
+
+		// test invalid boolean value, should use default
+		const consoleWarnSpy = vi.spyOn( console, 'warn' ).mockImplementation( () => {} );
+		window.location.search = '?enabled=anythingElse';
+		args = new UrlArgs( { enabled: false } );
+		expect( args.values.enabled ).toBe( false );
+		args = new UrlArgs( { enabled: true } );
+		expect( args.values.enabled ).toBe( true );
+		expect( consoleWarnSpy ).toHaveBeenCalled();
+		consoleWarnSpy.mockRestore();
+	} );
+
+	it( 'should handle invalid number parameters', () => {
+		const consoleWarnSpy = vi.spyOn( console, 'warn' ).mockImplementation( () => {} );
+		window.location.search = '?count=notanumber';
+		const args = new UrlArgs( { count: 123 } );
+		expect( args.values.count ).toBe( 123 );
+		expect( consoleWarnSpy ).toHaveBeenCalled();
+		consoleWarnSpy.mockRestore();
 	} );
 
 	it( 'should parse URL parameters and override defaults', () => {
@@ -95,6 +114,18 @@ describe( 'UrlArgs', () => {
 		const consoleSpy = vi.spyOn( console, 'log' );
 		expect( () => args.describe( {} ) ).not.toThrow();
 		consoleSpy.mockRestore();
+	} );
+
+	it( 'should handle string type', () => {
+		window.location.search = '?foo=bar';
+		const args = new UrlArgs( { foo: 'default' } );
+		expect( args.values.foo ).toBe( 'bar' );
+	} );
+
+	it( 'should throw on unsupported type', () => {
+		window.location.search = '?foo=bar';
+		const defaults = { foo: {} };
+		expect( () => new UrlArgs( defaults ) ).toThrow();
 	} );
 
 } );
