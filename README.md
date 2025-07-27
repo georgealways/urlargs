@@ -24,20 +24,20 @@ const { count, enabled, name, tags } = args.values;
 
 URL parameters are considered `true` if set to any of the following values (case-insensitive): `true`, `1`, or if the key is present with no value.
 
-- ✅ `?enabled`
-- ✅ `?enabled=`
-- ✅ `?enabled=true`
-- ✅ `?enabled=TRUE`
-- ✅ `?enabled=1`
+- 🟢 `?enabled`
+- 🟢 `?enabled=`
+- 🟢 `?enabled=true`
+- 🟢 `?enabled=TRUE`
+- 🟢 `?enabled=1`
 
 URL parameters are considered `false` if set to `false` or `0`.
 
-- ✅ `?enabled=false`
-- ✅ `?enabled=FALSE`
-- ✅ `?enabled=0`
+- 🔴 `?enabled=false`
+- 🔴 `?enabled=FALSE`
+- 🔴 `?enabled=0`
 
 > [!WARNING]
-> Any other value for a boolean will result in a warning in the console, and the default value will be used.
+> Any other value for a boolean will result in a console warning, and the default value will be used.
 
 ## Arrays
 
@@ -45,7 +45,7 @@ Parameters that appear multiple times are collected into a string array.
 
 `?tags=a&tags=b` → `['a', 'b']`
 
-> [!CAUTION]
+> [!WARNING]
 > Arrays are NOT comma-separated! The following will NOT work:
 
 `?tags=a,b` → `['a,b']`
