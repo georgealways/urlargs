@@ -29,10 +29,9 @@ expectType<number | undefined>( args.values.myUndefined );
 expectType<MyEnum>( args.values.myEnum );
 
 expectError( new UrlArgs( {
-	count: 10,
-	enabled: true,
-	name: 'test',
-	tags: [ 'a', 'b' ],
-	// @ts-expect-error - should throw on unsupported type
-	invalid: Symbol( 'invalid' ),
+	invalid: Symbol( 'invalid' )
+} ) );
+
+expectError( new UrlArgs( {
+	invalid: {}
 } ) );
