@@ -41,15 +41,14 @@ URL parameters are considered `false` if set to `false` or `0`.
 
 ## Arrays
 
-> [!TIP]
-> Parameters that appear multiple times are collected into a string array.
->
-> `?tags=a&tags=b` → `['a', 'b']`
+Parameters that appear multiple times are collected into a string array.
+
+`?tags=a&tags=b` → `['a', 'b']`
 
 > [!CAUTION]
 > Arrays are NOT comma-separated! The following will NOT work:
->
-> `?tags=a,b` → `['a,b']`
+
+`?tags=a,b` → `['a,b']`
 
 ## Documenting arguments
 
