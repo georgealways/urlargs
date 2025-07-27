@@ -1,7 +1,13 @@
+// Converts function values to their return type
 type UnwrapFunctions<T> = {
-	[K in keyof T]: T[K] extends ( v: string ) => infer R ? R : T[K];
+	[K in keyof T]: T[K] extends ( v: string ) => infer R ? R : WidenBooleans<T[K]>
 };
 
+// Prevent boolean values from being typed as true or false
+// (Not sure why this is only needed for boolean values)
+type WidenBooleans<T> = T extends boolean ? boolean : T;
+
+// The types of values that can be used as defaults
 type DefaultValue = null | undefined | string | number | boolean | string[] | ( ( v?: string ) => any );
 
 /**
