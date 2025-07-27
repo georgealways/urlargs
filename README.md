@@ -56,10 +56,8 @@ You can provide a function to transform the value before it is assigned to the a
 
 ```ts
 const args = new UrlArgs( {
-	count: 10,
 	myObj: ( value?: string ) => {
-		if ( !value ) return { a: 0, b: 0 };
-		return JSON.parse( value );
+		return value ? JSON.parse( value ) : { a: 0, b: 0 };
 	},
 } );
 
