@@ -52,12 +52,15 @@ Parameters that appear multiple times are collected into a string array.
 
 ## Transforming values
 
-You can provide a function to transform the value before it is assigned to the argument.
+You can provide a function to transform the value before it is assigned to the argument. If the value is not present, the function will be called with no arguments, in which case you can return a default value.
 
 ```ts
 const args = new UrlArgs( {
 	count: 10,
-	myObj: ( value: string ) => JSON.parse( value ),
+	myObj: ( value?: string ) => {
+		if ( !value ) return { a: 0, b: 0 };
+		return JSON.parse( value );
+	},
 } );
 
 // URL = website.com/?count=20&myObj={"a":1,"b":2}

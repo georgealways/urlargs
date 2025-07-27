@@ -2,6 +2,8 @@ type UnwrapFunctions<T> = {
 	[K in keyof T]: T[K] extends ( v: string ) => infer R ? R : T[K];
 };
 
+type DefaultValue = null | undefined | string | number | boolean | string[] | ( ( v?: string ) => any );
+
 /**
  * Parses URL query parameters into a typed object.
  * ```ts
@@ -9,7 +11,7 @@ type UnwrapFunctions<T> = {
  * const { count, enabled, name } = args.values;
  * ```
  */
-export class UrlArgs<T extends Record<string, any>> {
+export class UrlArgs<T extends Record<string, DefaultValue>> {
 
 	private readonly urlSearchParams: URLSearchParams;
 	private readonly defaults: T;
@@ -34,38 +36,45 @@ export class UrlArgs<T extends Record<string, any>> {
 		return !isNaN( Number( value ) );
 	}
 
-	private getValues(): T {
+	private getValues() {
 
-		const values = { ...this.defaults };
+		const values = {} as UnwrapFunctions<T>;
 
-		for ( const [ key, stringValue ] of this.urlSearchParams.entries() ) {
+		for ( const [ key, defaultValue ] of Object.entries( this.defaults ) ) {
 
-			if ( !( key in this.defaults ) ) continue;
+			if ( !this.urlSearchParams.has( key ) ) {
+				if ( typeof defaultValue === 'function' ) {
+					values[ key as keyof T ] = defaultValue();
+				} else {
+					values[ key as keyof T ] = defaultValue as UnwrapFunctions<T>[keyof T];
+				}
+				continue;
+			}
 
-			const defaultValue = this.defaults[ key as keyof T ];
-			const type = typeof defaultValue;
+			const stringValue = this.urlSearchParams.get( key )!;
 
 			const assign = ( parsedValue: any, validator?: ( v: string ) => boolean ) => {
 				if ( !validator || validator( stringValue ) ) {
 					values[ key as keyof T ] = parsedValue;
 				} else {
-					console.warn( `Invalid URL argument for ${key} [${type}]: "${stringValue}"` );
+					console.warn( `Invalid URL argument for ${key} [${typeof defaultValue}]: "${stringValue}"` );
 					console.warn( `Using default value: ${JSON.stringify( defaultValue )}` );
+					values[ key as keyof T ] = defaultValue as UnwrapFunctions<T>[keyof T];
 				}
 			};
 
-			if ( type === 'boolean' )
+			if ( typeof defaultValue === 'boolean' )
 				assign( UrlArgs.trueValues.includes( stringValue.toLowerCase() ), UrlArgs.validateBoolean );
-			else if ( type === 'number' )
+			else if ( typeof defaultValue === 'number' )
 				assign( Number( stringValue ), UrlArgs.validateNumber );
 			else if ( Array.isArray( defaultValue ) )
 				assign( this.urlSearchParams.getAll( key ) );
-			else if ( type === 'string' )
+			else if ( typeof defaultValue === 'string' )
 				assign( stringValue );
-			else if ( type === 'function' )
+			else if ( typeof defaultValue === 'function' )
 				assign( defaultValue( stringValue ) );
 			else
-				throw new Error( `Unsupported type for ${key}: ${type}` );
+				throw new Error( `Unsupported type for ${key}: ${typeof defaultValue}` );
 
 		}
 

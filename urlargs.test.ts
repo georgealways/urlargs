@@ -107,8 +107,25 @@ describe( 'UrlArgs', () => {
 	it( 'should handle transforming values to a custom type', () => {
 		type MyType = { a: number, b: number };
 		window.location.search = '?myObj={"a":1,"b":2}';
-		const args = new UrlArgs( { myObj: ( value: string ) => JSON.parse( value ) as MyType } );
+		const args = new UrlArgs( {
+			myObj: ( value?: string ): MyType => {
+				if ( !value ) return { a: 0, b: 0 };
+				return JSON.parse( value );
+			}
+		} );
 		expect( args.values.myObj ).toEqual( { a: 1, b: 2 } );
+	} );
+
+	it( 'should handle transforming values to a custom type with a default value', () => {
+		type MyType = { a: number, b: number };
+		window.location.search = '?notMentioned';
+		const args = new UrlArgs( {
+			myObj: ( value?: string ): MyType => {
+				if ( !value ) return { a: 30, b: 40 };
+				return JSON.parse( value );
+			}
+		} );
+		expect( args.values.myObj ).toEqual( { a: 30, b: 40 } );
 	} );
 
 	it( 'should not throw when describing a table with uneven rows', () => {
@@ -132,6 +149,7 @@ describe( 'UrlArgs', () => {
 	it( 'should throw on unsupported type', () => {
 		window.location.search = '?foo=bar';
 		const defaults = { foo: {} };
+		// @ts-expect-error - should throw on unsupported type
 		expect( () => new UrlArgs( defaults ) ).toThrow();
 	} );
 
