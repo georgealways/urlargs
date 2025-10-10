@@ -89,6 +89,27 @@ const args = new UrlArgs( {
 } );
 ```
 
+To restrict a parameter to a specific set of allowed values, use the `$allowed` type.
+
+```ts
+import { UrlArgs, $allowed } from 'urlargs';
+
+const args = new UrlArgs( {
+	theme: $allowed.string( 'light', 'dark', 'auto' ),
+	fontSize: $allowed.number( 12, 14, 16, 18 ),
+} );
+
+// if URL has ?theme=dark, then theme will be 'dark'
+// if URL has no theme param, then theme will default to 'light' (first value)
+// if URL has an invalid value like ?theme=blue, a warning will be shown and the default will be used
+// args.values.theme will be 'light' | 'dark' | 'auto'
+```
+
+Available allowed types:
+- `$allowed.number( ...values )`
+- `$allowed.boolean( ...values )`
+- `$allowed.string( ...values )`
+
 ## Documenting arguments
 
 UrlArgs can also generate a table of the parameters and their descriptions in the console:
