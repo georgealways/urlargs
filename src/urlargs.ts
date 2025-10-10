@@ -41,12 +41,11 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 		for ( const [ key, defaultValue ] of Object.entries( this.defaults ) ) {
 
 			if ( !this.urlSearchParams.has( key ) ) {
+				let v: DefaultValue | undefined | null = defaultValue;
 				if ( isNullish( defaultValue ) ) {
-					const fallback = defaultValue.defaultValue ?? defaultValue.type;
-					values[ key as keyof T ] = fallback as ResolveNullish<T>[keyof T];
-				} else {
-					values[ key as keyof T ] = defaultValue as ResolveNullish<T>[keyof T];
+					v = defaultValue.defaultValue ?? defaultValue.type;
 				}
+				values[ key as keyof T ] = v as ResolveNullish<T>[keyof T];
 				continue;
 			}
 
