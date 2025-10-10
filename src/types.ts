@@ -1,18 +1,20 @@
-import type { ArrayArg, NullishArg } from './special.js';
+import type { AllowedArg, ArrayArg, NullishArg } from './special.js';
 
-export type ResolveNullish<T> = {
+export type ResolveSpecial<T> = {
 	[K in keyof T]:
-	T[K] extends NullishArg<infer U, infer N>
-		? ( N extends undefined ? U | undefined : U | null )
+	T[K] extends NullishArg<infer U, infer K>
+		? ( U | undefined | null )
 		: T[K] extends ArrayArg<infer A> ? A[]
-			: T[K] extends boolean ? boolean : T[K]
+			: T[K] extends AllowedArg<infer L> ? L
+				: T[K] extends boolean ? boolean : T[K]
 };
 
 export type AllowedPrimitives = string | number | boolean;
 
 export type DefaultValue =
 	| AllowedPrimitives
-	| NullishArg<AllowedPrimitives, null | undefined>
+	| NullishArg<AllowedPrimitives, undefined | null>
 	| ArrayArg<AllowedPrimitives>
+	| AllowedArg<AllowedPrimitives>
 	| string[];
 

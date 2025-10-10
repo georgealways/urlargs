@@ -28,12 +28,19 @@
 		</a>
 	</p>
 
+	<!-- Allowed -->
+	<p>
+		Allowed: <a href="?theme=dark&size=medium&count=50">
+			/?theme=dark&size=medium&count=50
+		</a>
+	</p>
+
 	<hr>
 
 	<p>Click the links to change the URL arguments. Open your console to see argument descriptions.</p>
 
 	<script type="module">
-			import { UrlArgs, $undefined, $null, $array } from './src/index.ts';
+			import { UrlArgs, $undefined, $null, $array, $allowed } from './src/index.ts';
 
 			const defaults = {
 				count: 10,
@@ -45,6 +52,9 @@
 				arrayNumber: $array.number,
 				arrayBoolean: $array.boolean,
 				arrayString: $array.string,
+				theme: $allowed.string( 'light', 'dark', 'auto' ),
+				size: $allowed.string( 'small', 'medium', 'large' ),
+				priority: $allowed.number( 1, 2, 3, 4, 5 ),
 			};
 
 			const args = new UrlArgs( defaults );
@@ -58,6 +68,9 @@
 				arrayNumber: 'Use $array.number to allow array of numbers',
 				arrayBoolean: 'Use $array.boolean to allow array of booleans',
 				arrayString: '$array.string is included for consistency, but not necessary',
+				theme: 'Use $allowed.string to restrict values to a specific set',
+				size: 'Size of the component',
+				priority: 'Use $allowed.number to restrict numbers to specific values',
 			} );
 
 			window.args = args;

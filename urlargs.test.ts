@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { $array, $null, $undefined, UrlArgs } from './src/index.js';
+import { $allowed, $array, $null, $undefined, UrlArgs } from './src/index.js';
 
 describe( 'UrlArgs', () => {
 
@@ -169,9 +169,11 @@ describe( 'UrlArgs', () => {
 		const args = new UrlArgs( {
 			foo: $null.string( 'test' ),
 			bar: $undefined.number( 42 ),
+			baz: $null.number,
 		} );
 		expect( args.values.foo ).toBe( 'test' );
 		expect( args.values.bar ).toBe( 42 );
+		expect( args.values.baz ).toBe( null );
 	} );
 
 	it( 'should use nullish default value on invalid input', () => {
@@ -203,6 +205,34 @@ describe( 'UrlArgs', () => {
 	it( 'should handle array boolean with default value', () => {
 		const args = new UrlArgs( { foo: $array.boolean( [ true, false, true ] ) } );
 		expect( args.values.foo ).toEqual( [ true, false, true ] );
+	} );
+
+	it( 'should handle the allowed type', () => {
+		let args = new UrlArgs( { foo: $allowed.string( 'a', 'b', 'c' ) } );
+		expect( args.values.foo ).toEqual( 'a' );
+		window.location.search = '?foo=d';
+		args = new UrlArgs( { foo: $allowed.string( 'a', 'b', 'c' ) } );
+		expect( args.values.foo ).toEqual( 'd' );
+	} );
+
+	it( 'should warn on invalid allowed type', () => {
+		const consoleWarnSpy = vi.spyOn( console, 'warn' ).mockImplementation( () => {} );
+		window.location.search = '?foo=d';
+		new UrlArgs( { foo: $allowed.string( 'a', 'b', 'c' ) } );
+		expect( consoleWarnSpy ).toHaveBeenCalled();
+		consoleWarnSpy.mockRestore();
+	} );
+
+	it( 'should log the allowed types when describing', () => {
+		let logs: string[] = [];
+		const consoleLogSpy = vi.spyOn( console, 'log' ).mockImplementation( ( ...args ) => {
+			logs.push( args.join( ' ' ) );
+		} );
+		const allowed = [ 'a', 'b', 'c' ];
+		new UrlArgs( { foo: $allowed.string( ...allowed ) } ).describe( { foo: 'The foo parameter' } );
+		expect( consoleLogSpy ).toHaveBeenCalled();
+		expect( logs.some( log => log.includes( allowed.join( ', ' ) ) ) ).toBe( true );
+		consoleLogSpy.mockRestore();
 	} );
 
 } );

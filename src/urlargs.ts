@@ -1,6 +1,6 @@
-import type { AllowedPrimitives, DefaultValue, ResolveNullish } from './types.js';
+import type { AllowedPrimitives, DefaultValue, ResolveSpecial } from './types.js';
 
-import { isArray, isNullish, isSpecial } from './special.js';
+import { isAllowed, isArray, isNullish, isSpecial } from './special.js';
 import { isTrue, validateBoolean, validateNumber } from './validators.js';
 
 /**
@@ -15,11 +15,11 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 	private readonly urlSearchParams: URLSearchParams;
 	private readonly defaults: T;
 
-	readonly values: Readonly<ResolveNullish<T>>;
+	readonly values: Readonly<ResolveSpecial<T>>;
 
 	private validateDefaults( defaults: T ) {
 		for ( const [ key, defaultValue ] of Object.entries( defaults ) ) {
-			if ( isNullish( defaultValue ) || isArray( defaultValue ) ) continue;
+			if ( isNullish( defaultValue ) || isArray( defaultValue ) || isAllowed( defaultValue ) ) continue;
 			if ( defaultValue === undefined ) {
 				throw new Error( 'Use $undefined to allow undefined values' );
 			}
@@ -45,18 +45,13 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 
 	private getValues() {
 
-		const values = {} as ResolveNullish<T>;
+		const values = {} as ResolveSpecial<T>;
 
 		for ( const [ key, arg ] of Object.entries( this.defaults ) ) {
 
 			if ( !this.urlSearchParams.has( key ) ) {
-				let v: DefaultValue | AllowedPrimitives[] | undefined | null = arg;
-				if ( isNullish( arg ) ) {
-					v = arg.defaultValue ?? arg.type;
-				} else if ( isArray( arg ) ) {
-					v = arg.defaultValue ?? [];
-				}
-				values[ key as keyof T ] = v as ResolveNullish<T>[keyof T];
+				const val = isSpecial( arg ) ? arg.defaultValue : arg;
+				values[ key as keyof T ] = val as ResolveSpecial<T>[keyof T];
 				continue;
 			}
 
@@ -73,14 +68,19 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 				}
 			};
 
-			if ( isNullish( arg ) ) {
-				const fallback = arg.defaultValue ?? arg.type;
-				assign( arg.parse( stringValue ), arg.validate, fallback );
+			if ( isAllowed( arg ) ) {
+				const parsed = arg.parse( stringValue );
+				if ( !arg.validate( stringValue ) ) {
+					console.warn( `Invalid URL argument for ${key}: "${stringValue}" (allowed: ${arg.allowed.join( ', ' )})` );
+				}
+				values[ key as keyof T ] = parsed as ResolveSpecial<T>[keyof T];
+			} else if ( isNullish( arg ) ) {
+				assign( arg.parse( stringValue ), arg.validate, arg.defaultValue );
 			} else if ( isArray( arg ) ) {
 				assign(
 					arrayValue.map( arg.parse ),
 					() => arrayValue.every( arg.validate ),
-					arg.defaultValue ?? []
+					arg.defaultValue
 				);
 			} else if ( typeof arg === 'boolean' ) {
 				assign( isTrue( stringValue ), validateBoolean, arg );
@@ -121,20 +121,20 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 			let description = descriptions[ key ] || '';
 			let defaultValue: DefaultValue | AllowedPrimitives[] | undefined | null = this.defaults[ key ];
 			let type: string;
-			if (isSpecial( defaultValue )) {
+			if ( isSpecial( defaultValue ) ) {
 				type = defaultValue.typeLabel;
-				defaultValue = defaultValue.defaultValue ?? defaultValue.type;
+				defaultValue = defaultValue.defaultValue;
 			} else {
 				type = Array.isArray( defaultValue ) ? 'string[]' : typeof defaultValue;
 			}
 			const value = this.values[ key ];
 			const isDefaultValue = value === defaultValue || arraysEqual( defaultValue, value );
-			
+
 			const valueStr = this.truncate( this.stringify( value ) );
 			const valueStyle = !isDefaultValue ? 'font-weight: bold; color: #f70' : '';
-			
+
 			console.log( `%c${key}: %c${valueStr}`, 'font-weight: bold', valueStyle );
-			
+
 			let secondLine = type + ' ·';
 			if ( !isDefaultValue ) {
 				const defaultStr = this.stringify( defaultValue );
@@ -143,26 +143,26 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 			if ( description.trim() ) {
 				secondLine += ` ${description.trim()}`;
 			}
-			
-			console.info( ` %c└─ ${type}%c${secondLine.substring( type.length )}`, 'font-style: italic; color: #999', 'color: #999' );
+
+			console.log( ` %c└─ ${type}%c${secondLine.substring( type.length )}`, 'font-style: italic; color: #999', 'color: #999' );
 		}
 	}
 
 	private stringify( value: any ): string {
-		if (value === null) return 'null';
-		if (value === undefined) return 'undefined';
+		if ( value === null ) return 'null';
+		if ( value === undefined ) return 'undefined';
 		return JSON.stringify( value );
 	}
-	
+
 	private truncate( str: string, maxLength = 40 ): string {
 		return str.length > maxLength ? str.substring( 0, maxLength ) + '…' : str;
 	}
 
 }
 
-const arraysEqual = (a: any, b: any): boolean => {
-  if (Array.isArray(a) && Array.isArray(b)) {
-		return a.every( (value, index) => value === b[ index ] );
-  }
-  return false;
-}
+const arraysEqual = ( a: any, b: any ): boolean => {
+	if ( Array.isArray( a ) && Array.isArray( b ) ) {
+		return a.every( ( value, index ) => value === b[ index ] );
+	}
+	return false;
+};
