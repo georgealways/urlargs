@@ -181,7 +181,7 @@ describe( 'UrlArgs', () => {
 		expect( args.values.foo ).toEqual( 'a' );
 		window.location.search = '?foo=d';
 		args = new UrlArgs( { foo: $allowed.string( 'a', 'b', 'c' ) } );
-		expect( args.values.foo ).toEqual( 'd' );
+		expect( args.values.foo ).toEqual( 'a' );
 	} );
 
 	it( 'should warn on invalid allowed type', () => {

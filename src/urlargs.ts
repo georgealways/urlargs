@@ -58,38 +58,44 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 			const stringValue = this.urlSearchParams.get( key )!;
 			const arrayValue = this.urlSearchParams.getAll( key );
 
-			const assign = ( parsedValue: any, validator: ( v: string ) => boolean, fallback: any ) => {
+			const assign = (
+				parsedValue: any,
+				validator = ( _: string ) => true,
+				defaultValue: any = arg
+			) => {
 				if ( validator( stringValue ) ) {
 					values[ key as keyof T ] = parsedValue;
-				} else {
-					console.warn( `Invalid URL argument for ${key}: "${stringValue}"` );
-					console.warn( `Using default value: ${JSON.stringify( fallback )}` );
-					values[ key as keyof T ] = fallback;
+					return;
 				}
+				console.warn( `Invalid URL argument for ${key}: "${stringValue}"` );
+				console.warn( `Using default value: ${JSON.stringify( defaultValue )}` );
+				values[ key as keyof T ] = defaultValue;
 			};
 
-			if ( isAllowed( arg ) ) {
-				const parsed = arg.parse( stringValue );
-				if ( !arg.validate( stringValue ) ) {
-					console.warn( `Invalid URL argument for ${key}: "${stringValue}" (allowed: ${arg.allowed.join( ', ' )})` );
-				}
-				values[ key as keyof T ] = parsed as ResolveSpecial<T>[keyof T];
-			} else if ( isNullish( arg ) ) {
+			if ( isAllowed( arg ) || isNullish( arg ) ) {
+
 				assign( arg.parse( stringValue ), arg.validate, arg.defaultValue );
+
 			} else if ( isArray( arg ) ) {
-				assign(
-					arrayValue.map( arg.parse ),
-					() => arrayValue.every( arg.validate ),
-					arg.defaultValue
-				);
+
+				assign( arrayValue.map( arg.parse ), () => arrayValue.every( arg.validate ), arg.defaultValue );
+
 			} else if ( typeof arg === 'boolean' ) {
-				assign( isTrue( stringValue ), validateBoolean, arg );
+
+				assign( isTrue( stringValue ), validateBoolean );
+
 			} else if ( typeof arg === 'number' ) {
-				assign( Number( stringValue ), validateNumber, arg );
+
+				assign( Number( stringValue ), validateNumber );
+
 			} else if ( typeof arg === 'string' ) {
-				assign( stringValue, () => true, arg );
+
+				assign( stringValue );
+
 			} else if ( Array.isArray( arg ) ) {
-				assign( arrayValue, () => true, arg );
+
+				assign( arrayValue );
+
 			}
 
 		}
@@ -118,33 +124,36 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 	public describe( descriptions: Partial<Record<keyof T, string>> = {} ): void {
 		const keys = Object.keys( descriptions );
 		for ( const key of keys ) {
-			let description = descriptions[ key ] || '';
-			let defaultValue: DefaultValue | AllowedPrimitives[] | undefined | null = this.defaults[ key ];
+			const description = descriptions[ key ] || '';
+			let arg: DefaultValue | AllowedPrimitives[] | undefined | null = this.defaults[ key ];
 			let type: string;
-			if ( isSpecial( defaultValue ) ) {
-				type = defaultValue.typeLabel;
-				defaultValue = defaultValue.defaultValue;
+			if ( isSpecial( arg ) ) {
+				type = arg.typeLabel;
+				arg = arg.defaultValue;
 			} else {
-				type = Array.isArray( defaultValue ) ? 'string[]' : typeof defaultValue;
+				type = Array.isArray( arg ) ? 'string[]' : typeof arg;
 			}
 			const value = this.values[ key ];
-			const isDefaultValue = value === defaultValue || arraysEqual( defaultValue, value );
+			const isDefaultValue = value === arg || arraysEqual( arg, value );
 
 			const valueStr = this.truncate( this.stringify( value ) );
 			const valueStyle = !isDefaultValue ? 'font-weight: bold; color: #f70' : '';
 
-			console.log( `%c${key}: %c${valueStr}`, 'font-weight: bold', valueStyle );
-
 			let secondLine = type + ' ·';
 			if ( !isDefaultValue ) {
-				const defaultStr = this.stringify( defaultValue );
+				const defaultStr = this.stringify( arg );
 				secondLine += ` (default: ${defaultStr})`;
 			}
 			if ( description.trim() ) {
 				secondLine += ` ${description.trim()}`;
 			}
 
-			console.log( ` %c└─ ${type}%c${secondLine.substring( type.length )}`, 'font-style: italic; color: #999', 'color: #999' );
+			console.log( `%c${key}: %c${valueStr}`, 'font-weight: bold', valueStyle );
+			console.log(
+				` %c└─ ${type}%c${secondLine.substring( type.length )}`,
+				'font-style: italic; color: #999',
+				'color: #999'
+			);
 		}
 	}
 
