@@ -50,7 +50,7 @@ Parameters that appear multiple times are collected into a string array.
 
 `?tags=a,b` → `['a,b']`
 
-## Special types
+## Nullish types
 
 Some types cannot be inferred from the default value, so we need to use special types.
 
@@ -63,11 +63,11 @@ const args = new UrlArgs( {
 	count: $undefined.number,
 	description: $null.string,
 } );
-
-// if URL has ?count=5, then count will be 5
-// if URL has no count param, then count will be undefined
-// args.values.count will be `number | undefined`
 ```
+
+- `count` will be of type `number | undefined`.
+- If there is no count parameter, it will default to `undefined`.
+- If there is an invalid value like `?count=abc`, a warning will be shown and the default will be used.
 
 Available nullish types: 
 - `$undefined.number`
@@ -76,6 +76,8 @@ Available nullish types:
 - `$null.number`
 - `$null.boolean`
 - `$null.string`
+
+## Array types
 
 By default, arrays are assumed to be `string[]`. To specify a different type, use the `$array` type.
 
@@ -89,6 +91,8 @@ const args = new UrlArgs( {
 } );
 ```
 
+## Allowed types
+
 To restrict a parameter to a specific set of allowed values, use the `$allowed` type.
 
 ```ts
@@ -99,7 +103,7 @@ const args = new UrlArgs( {
 	fontSize: $allowed.number( 12, 14, 16, 18 ),
 } );
 ```
-
+- `theme` will be of type `'light' | 'dark' | 'auto'`.
 - If there is an invalid value like `?theme=blue`, a warning will be shown and the default will be used.
 - If there is no theme parameter, it will default to the first value.
 - Allowed types will be displayed by `describe()`.
