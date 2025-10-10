@@ -1,6 +1,6 @@
-import type { DefaultValue, ResolveNullish } from './types.js';
+import type { AllowedPrimitives, DefaultValue, ResolveNullish } from './types.js';
 
-import { isNullish } from './optional.js';
+import { isArray, isNullish } from './special.js';
 import { isTrue, validateBoolean, validateNumber } from './validators.js';
 
 /**
@@ -19,7 +19,16 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 
 	private validateDefaults( defaults: T ) {
 		for ( const [ key, defaultValue ] of Object.entries( defaults ) ) {
-			if ( isNullish( defaultValue ) ) continue;
+			if ( isNullish( defaultValue ) || isArray( defaultValue ) ) continue;
+			if ( defaultValue === undefined ) {
+				throw new Error( 'Use $undefined to allow undefined values' );
+			}
+			if ( defaultValue === null ) {
+				throw new Error( 'Use $null to allow null values' );
+			}
+			if ( Array.isArray( defaultValue ) && !defaultValue.every( v => typeof v === 'string' ) ) {
+				throw new Error( 'Use $array for non string[] arrays.' );
+			}
 			const type = typeof defaultValue;
 			if ( ![ 'boolean', 'number', 'string' ].includes( type ) && !Array.isArray( defaultValue ) ) {
 				throw new Error( `Unsupported type for ${key}: ${type}` );
@@ -38,18 +47,21 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 
 		const values = {} as ResolveNullish<T>;
 
-		for ( const [ key, defaultValue ] of Object.entries( this.defaults ) ) {
+		for ( const [ key, arg ] of Object.entries( this.defaults ) ) {
 
 			if ( !this.urlSearchParams.has( key ) ) {
-				let v: DefaultValue | undefined | null = defaultValue;
-				if ( isNullish( defaultValue ) ) {
-					v = defaultValue.defaultValue ?? defaultValue.type;
+				let v: DefaultValue | AllowedPrimitives[] | undefined | null = arg;
+				if ( isNullish( arg ) ) {
+					v = arg.defaultValue ?? arg.type;
+				} else if ( isArray( arg ) ) {
+					v = arg.defaultValue ?? [];
 				}
 				values[ key as keyof T ] = v as ResolveNullish<T>[keyof T];
 				continue;
 			}
 
 			const stringValue = this.urlSearchParams.get( key )!;
+			const arrayValue = this.urlSearchParams.getAll( key );
 
 			const assign = ( parsedValue: any, validator: ( v: string ) => boolean, fallback: any ) => {
 				if ( validator( stringValue ) ) {
@@ -61,17 +73,24 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 				}
 			};
 
-			if ( isNullish( defaultValue ) ) {
-				const fallback = defaultValue.defaultValue ?? defaultValue.type;
-				assign( defaultValue.parse( stringValue ), defaultValue.validate, fallback );
-			} else if ( typeof defaultValue === 'boolean' )
-				assign( isTrue( stringValue ), validateBoolean, defaultValue );
-			else if ( typeof defaultValue === 'number' )
-				assign( Number( stringValue ), validateNumber, defaultValue );
-			else if ( typeof defaultValue === 'string' )
-				assign( stringValue, () => true, defaultValue );
-			else if ( Array.isArray( defaultValue ) )
-				assign( this.urlSearchParams.getAll( key ), () => true, defaultValue );
+			if ( isNullish( arg ) ) {
+				const fallback = arg.defaultValue ?? arg.type;
+				assign( arg.parse( stringValue ), arg.validate, fallback );
+			} else if ( isArray( arg ) ) {
+				assign(
+					arrayValue.map( arg.parse ),
+					() => arrayValue.every( arg.validate ),
+					arg.defaultValue ?? []
+				);
+			} else if ( typeof arg === 'boolean' ) {
+				assign( isTrue( stringValue ), validateBoolean, arg );
+			} else if ( typeof arg === 'number' ) {
+				assign( Number( stringValue ), validateNumber, arg );
+			} else if ( typeof arg === 'string' ) {
+				assign( stringValue, () => true, arg );
+			} else if ( Array.isArray( arg ) ) {
+				assign( arrayValue, () => true, arg );
+			}
 
 		}
 

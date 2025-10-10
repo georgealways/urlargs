@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { $null, $undefined, UrlArgs } from './src/index.js';
+import { $array, $null, $undefined, UrlArgs } from './src/index.js';
 
 describe( 'UrlArgs', () => {
 
@@ -167,6 +167,28 @@ describe( 'UrlArgs', () => {
 		expect( args.values.count ).toBe( 100 );
 		expect( consoleWarnSpy ).toHaveBeenCalled();
 		consoleWarnSpy.mockRestore();
+	} );
+
+	it( 'should handle array number type', () => {
+		window.location.search = '?foo=1&foo=2&foo=3';
+		const args = new UrlArgs( { foo: $array.number } );
+		expect( args.values.foo ).toEqual( [ 1, 2, 3 ] );
+	} );
+
+	it( 'should handle array number with default value', () => {
+		const args = new UrlArgs( { foo: $array.number( [ 1, 2, 3 ] ) } );
+		expect( args.values.foo ).toEqual( [ 1, 2, 3 ] );
+	} );
+
+	it( 'should handle array boolean type', () => {
+		window.location.search = '?foo=true&foo=false&foo=true';
+		const args = new UrlArgs( { foo: $array.boolean } );
+		expect( args.values.foo ).toEqual( [ true, false, true ] );
+	} );
+
+	it( 'should handle array boolean with default value', () => {
+		const args = new UrlArgs( { foo: $array.boolean( [ true, false, true ] ) } );
+		expect( args.values.foo ).toEqual( [ true, false, true ] );
 	} );
 
 } );

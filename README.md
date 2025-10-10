@@ -50,9 +50,11 @@ Parameters that appear multiple times are collected into a string array.
 
 `?tags=a,b` → `['a,b']`
 
-## Nullish types
+## Special types
 
-For types that can be `undefined` or `null`, use the `$undefined` or `$null` types. Without it, we can't infer the type of the parameter.
+Some types cannot be inferred from the default value, so we need to use special types.
+
+For types that can be `undefined` or `null`, use the `$undefined` or `$null` types.
 
 ```ts
 import { UrlArgs, $undefined, $null } from 'urlargs';
@@ -67,7 +69,25 @@ const args = new UrlArgs( {
 // args.values.count will be `number | undefined`
 ```
 
-Available nullish types: `$undefined.number`, `$undefined.boolean`, `$undefined.string`, `$null.number`, `$null.boolean`, `$null.string`.
+Available nullish types: 
+- `$undefined.number`
+- `$undefined.boolean`
+- `$undefined.string`
+- `$null.number`
+- `$null.boolean`
+- `$null.string`
+
+By default, arrays are assumed to be `string[]`. To specify a different type, use the `$array` type.
+
+```ts
+import { UrlArgs, $array } from 'urlargs';
+
+const args = new UrlArgs( {
+	numbers: $array.number,
+	booleans: $array.boolean,
+	strings: $array.string, // included for consistency, but not necessary
+} );
+```
 
 ## Documenting arguments
 
