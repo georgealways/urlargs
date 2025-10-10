@@ -23,7 +23,7 @@
   "scripts": {
     "build": "tsc src/index.ts --target esnext --declaration --outDir ./dist",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run clean && npm run build && npm run test && npm run test:types",
+    "prepublishOnly": "npm run clean && npm run build && npm run lint && npm run test && npm run test:types",
     "lint": "eslint . --fix",
     "test": "vitest run --environment jsdom",
     "test:types": "tsd",
