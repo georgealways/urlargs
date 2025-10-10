@@ -87,7 +87,16 @@ describe( 'UrlArgs', () => {
 	} );
 
 	it( 'should describe URL arguments', () => {
-		const defaults = { count: 10, enabled: true, name: 'test' };
+		const defaults = {
+			count: 10,
+			enabled: true,
+			name: 'test',
+			undefinedNumber: $undefined.number,
+			nullString: $null.string,
+			arrayNumber: $array.number,
+			arrayBoolean: $array.boolean,
+			arrayString: $array.string,
+		};
 		const args = new UrlArgs( defaults );
 
 		const consoleSpy = vi.spyOn( console, 'log' );
@@ -96,6 +105,11 @@ describe( 'UrlArgs', () => {
 			count: 'The number of items to display',
 			enabled: 'Whether the items are enabled',
 			name: 'The name of the items',
+			undefinedNumber: '$undefined.number test',
+			nullString: '$null.string test',
+			arrayNumber: '$array.number test',
+			arrayBoolean: '$array.boolean test',
+			arrayString: '$array.string test',
 		};
 
 		args.describe( descriptions );

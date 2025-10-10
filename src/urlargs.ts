@@ -1,6 +1,6 @@
 import type { AllowedPrimitives, DefaultValue, ResolveNullish } from './types.js';
 
-import { isArray, isNullish } from './special.js';
+import { isArray, isNullish, isSpecial } from './special.js';
 import { isTrue, validateBoolean, validateNumber } from './validators.js';
 
 /**
@@ -15,7 +15,7 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 	private readonly urlSearchParams: URLSearchParams;
 	private readonly defaults: T;
 
-	readonly values: ResolveNullish<T>;
+	readonly values: Readonly<ResolveNullish<T>>;
 
 	private validateDefaults( defaults: T ) {
 		for ( const [ key, defaultValue ] of Object.entries( defaults ) ) {
@@ -121,16 +121,23 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 		const styles: string[][] = [];
 		for ( const key of keys ) {
 			let description = descriptions[ key ] || '';
-			const defaultValue = this.defaults[ key ];
-			const type = Array.isArray( defaultValue ) ? 'array' : typeof defaultValue;
+			let defaultValue: DefaultValue | AllowedPrimitives[] | undefined | null = this.defaults[ key ];
+			let type: string;
+			if (isSpecial( defaultValue )) {
+				type = defaultValue.typeLabel;
+				defaultValue = defaultValue.defaultValue ?? defaultValue.type;
+			} else {
+				type = Array.isArray( defaultValue ) ? 'string[]' : typeof defaultValue;
+			}
 			const value = this.values[ key ];
-			if ( defaultValue !== value ) {
+			const isDefaultValue = value === defaultValue || arraysEqual( defaultValue, value );
+			if ( !isDefaultValue ) {
 				description += ` (default: ${JSON.stringify( defaultValue )})`;
 			}
 			rows.push( [
 				key,
 				type,
-				this.truncate( JSON.stringify( value ) ),
+				this.truncate( this.stringify( value ) ),
 				description.trim(),
 			] );
 			styles.push( [
@@ -143,6 +150,12 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 		this.printTable( rows, styles );
 	}
 
+	private stringify( value: any ): string {
+		if (value === null) return 'null';
+		if (value === undefined) return 'undefined';
+		return JSON.stringify( value );
+	}
+	
 	private truncate( str: string, maxLength = 40 ): string {
 		return str.length > maxLength ? str.substring( 0, maxLength ) + '…' : str;
 	}
@@ -172,3 +185,9 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 
 }
 
+const arraysEqual = (a: any, b: any): boolean => {
+  if (Array.isArray(a) && Array.isArray(b)) {
+		return a.every( (value, index) => value === b[ index ] );
+  }
+  return false;
+}
