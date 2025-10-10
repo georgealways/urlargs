@@ -117,8 +117,6 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 	 */
 	public describe( descriptions: Partial<Record<keyof T, string>> = {} ): void {
 		const keys = Object.keys( descriptions );
-		const rows: string[][] = [];
-		const styles: string[][] = [];
 		for ( const key of keys ) {
 			let description = descriptions[ key ] || '';
 			let defaultValue: DefaultValue | AllowedPrimitives[] | undefined | null = this.defaults[ key ];
@@ -131,23 +129,23 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 			}
 			const value = this.values[ key ];
 			const isDefaultValue = value === defaultValue || arraysEqual( defaultValue, value );
+			
+			const valueStr = this.truncate( this.stringify( value ) );
+			const valueStyle = !isDefaultValue ? 'font-weight: bold; color: #f70' : '';
+			
+			console.log( `%c${key}: %c${valueStr}`, 'font-weight: bold', valueStyle );
+			
+			let secondLine = type + ' ·';
 			if ( !isDefaultValue ) {
-				description += ` (default: ${JSON.stringify( defaultValue )})`;
+				const defaultStr = this.stringify( defaultValue );
+				secondLine += ` (default: ${defaultStr})`;
 			}
-			rows.push( [
-				key,
-				type,
-				this.truncate( this.stringify( value ) ),
-				description.trim(),
-			] );
-			styles.push( [
-				'font-weight: bold',
-				'color: #999',
-				!isDefaultValue ? 'font-weight: bold; color: #f70' : '',
-				'color: #999',
-			] );
+			if ( description.trim() ) {
+				secondLine += ` ${description.trim()}`;
+			}
+			
+			console.info( ` %c└─ ${type}%c${secondLine.substring( type.length )}`, 'font-style: italic; color: #999', 'color: #999' );
 		}
-		this.printTable( rows, styles );
 	}
 
 	private stringify( value: any ): string {
@@ -158,29 +156,6 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 	
 	private truncate( str: string, maxLength = 40 ): string {
 		return str.length > maxLength ? str.substring( 0, maxLength ) + '…' : str;
-	}
-
-	private printTable( rows: string[][], styles: string[][] ): void {
-		const colWidths: number[] = [];
-		for ( const row of rows ) {
-			for ( let c = 0; c < row.length; c++ ) {
-				const cellWidth = row[ c ]?.length ?? 0;
-				if ( !colWidths[ c ] || cellWidth > colWidths[ c ] ) {
-					colWidths[ c ] = cellWidth;
-				}
-			}
-		}
-
-		rows.forEach( ( row, i ) => {
-			const rowStyles = styles[ i ];
-			const lineParts = row.map( ( cell, c ) => {
-				const padding = ( colWidths[ c ] ?? 0 ) - cell.length;
-				const paddedCell = `${cell}${ ' '.repeat( padding ) }`;
-				return `%c${paddedCell}`;
-			} );
-			const line = lineParts.join( '  ' );
-			console.log( line, ...rowStyles );
-		} );
 	}
 
 }
