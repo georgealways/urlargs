@@ -32,11 +32,11 @@ export class ArrayArg<T> extends BaseArg<T> {
 	}
 }
 
-export class AllowedArg<T> extends BaseArg<T> {
+export class AllowedArg<T, A extends readonly T[] = T[]> extends BaseArg<T> {
 	readonly [ ALLOWED_MARKER ] = true;
 	readonly defaultValue: T;
 	constructor(
-		readonly allowed: T[],
+		readonly allowed: A,
 		...args: ConstructorParameters<typeof BaseArg<T>>
 	) {
 		super( ...args );
@@ -81,13 +81,13 @@ const createAllowed = <T extends string | number | boolean>(
 	baseTypeLabel: string,
 	parse: ( value: string ) => T,
 	baseValidate: ( value: string ) => boolean,
-) => ( ...allowed: T[] ) => {
+) => <const A extends readonly T[]>( ...allowed: A ) => {
 	const typeLabel = `${baseTypeLabel} (${allowed.join( ', ' )})`;
 	const validate = ( value: string ) => {
 		const parsed = parse( value );
 		return baseValidate( value ) && allowed.includes( parsed );
 	};
-	return new AllowedArg<T>( allowed, typeLabel, parse, validate );
+	return new AllowedArg<T, A>( allowed, typeLabel, parse, validate );
 };
 
 export const $undefined = Object.freeze( {

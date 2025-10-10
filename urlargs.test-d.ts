@@ -29,8 +29,8 @@ expectType<number | undefined>( args.values.myUndefined );
 expectType<MyEnum>( args.values.myEnum );
 expectType<number[]>( args.values.myNumberArray );
 expectType<boolean[]>( args.values.myBooleanArray );
-expectType<string>( args.values.myAllowedString );
-expectType<number>( args.values.myAllowedNumber );
+expectType<'a' | 'b' | 'c'>( args.values.myAllowedString );
+expectType<1 | 2 | 3>( args.values.myAllowedNumber );
 
 // expected errors
 expectError( new UrlArgs( { invalid: undefined } ) );
