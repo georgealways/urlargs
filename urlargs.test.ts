@@ -150,7 +150,7 @@ describe( 'UrlArgs', () => {
 		expect( args2.values.foo ).toBe( undefined );
 	} );
 
-	it( 'should handle optional with default value', () => {
+	it( 'should handle nullish with default value', () => {
 		window.location.search = '';
 		const args = new UrlArgs( {
 			foo: $null.string( 'test' ),
@@ -160,7 +160,7 @@ describe( 'UrlArgs', () => {
 		expect( args.values.bar ).toBe( 42 );
 	} );
 
-	it( 'should use optional default value on invalid input', () => {
+	it( 'should use nullish default value on invalid input', () => {
 		const consoleWarnSpy = vi.spyOn( console, 'warn' ).mockImplementation( () => {} );
 		window.location.search = '?count=notanumber';
 		const args = new UrlArgs( { count: $null.number( 100 ) } );

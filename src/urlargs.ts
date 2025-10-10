@@ -1,6 +1,6 @@
-import type { DefaultValue, ResolveOptionals } from './types.js';
+import type { DefaultValue, ResolveNullish } from './types.js';
 
-import { isOptional } from './optional.js';
+import { isNullish } from './optional.js';
 import { isTrue, validateBoolean, validateNumber } from './validators.js';
 
 /**
@@ -15,11 +15,11 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 	private readonly urlSearchParams: URLSearchParams;
 	private readonly defaults: T;
 
-	readonly values: ResolveOptionals<T>;
+	readonly values: ResolveNullish<T>;
 
 	private validateDefaults( defaults: T ) {
 		for ( const [ key, defaultValue ] of Object.entries( defaults ) ) {
-			if ( isOptional( defaultValue ) ) continue;
+			if ( isNullish( defaultValue ) ) continue;
 			const type = typeof defaultValue;
 			if ( ![ 'boolean', 'number', 'string' ].includes( type ) && !Array.isArray( defaultValue ) ) {
 				throw new Error( `Unsupported type for ${key}: ${type}` );
@@ -36,16 +36,16 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 
 	private getValues() {
 
-		const values = {} as ResolveOptionals<T>;
+		const values = {} as ResolveNullish<T>;
 
 		for ( const [ key, defaultValue ] of Object.entries( this.defaults ) ) {
 
 			if ( !this.urlSearchParams.has( key ) ) {
-				if ( isOptional( defaultValue ) ) {
+				if ( isNullish( defaultValue ) ) {
 					const fallback = defaultValue.defaultValue ?? defaultValue.type;
-					values[ key as keyof T ] = fallback as ResolveOptionals<T>[keyof T];
+					values[ key as keyof T ] = fallback as ResolveNullish<T>[keyof T];
 				} else {
-					values[ key as keyof T ] = defaultValue as ResolveOptionals<T>[keyof T];
+					values[ key as keyof T ] = defaultValue as ResolveNullish<T>[keyof T];
 				}
 				continue;
 			}
@@ -62,7 +62,7 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 				}
 			};
 
-			if ( isOptional( defaultValue ) ) {
+			if ( isNullish( defaultValue ) ) {
 				const fallback = defaultValue.defaultValue ?? defaultValue.type;
 				assign( defaultValue.parse( stringValue ), defaultValue.validate, fallback );
 			} else if ( typeof defaultValue === 'boolean' )

@@ -1,8 +1,8 @@
-import type { Optional } from './optional.js';
+import type { Nullish } from './optional.js';
 
-export type ResolveOptionals<T> = {
+export type ResolveNullish<T> = {
 	[K in keyof T]:
-	T[K] extends Optional<infer U, infer N>
+	T[K] extends Nullish<infer U, infer N>
 		? ( N extends undefined ? U | undefined : U | null )
 		: T[K] extends boolean ? boolean : T[K]
 };
@@ -11,6 +11,6 @@ export type DefaultValue =
 	| string
 	| number
 	| boolean
-	| Optional<string | number | boolean, null | undefined>
+	| Nullish<string | number | boolean, null | undefined>
 	| string[];
 

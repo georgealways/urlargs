@@ -50,9 +50,9 @@ Parameters that appear multiple times are collected into a string array.
 
 `?tags=a,b` → `['a,b']`
 
-## Optional types
+## Nullish types
 
-Use a special type when the default value is `undefined` or `null`. Without it, we can't infer the type of the parameter.
+For types that can be `undefined` or `null`, use the `$undefined` or `$null` types. Without it, we can't infer the type of the parameter.
 
 ```ts
 import { UrlArgs, $undefined, $null } from 'urlargs';
@@ -64,17 +64,10 @@ const args = new UrlArgs( {
 
 // if URL has ?count=5, then count will be 5
 // if URL has no count param, then count will be undefined
+// args.values.count will be `number | undefined`
 ```
 
-If the default value is *not* `undefined` or `null`, just use a type assertion:
-
-```ts
-const args = new UrlArgs( {
-	count: 2 as number | undefined,
-} );
-```
-
-Available optional types: `$undefined.number`, `$undefined.boolean`, `$undefined.string`, `$null.number`, `$null.boolean`, `$null.string`.
+Available nullish types: `$undefined.number`, `$undefined.boolean`, `$undefined.string`, `$null.number`, `$null.boolean`, `$null.string`.
 
 ## Documenting arguments
 

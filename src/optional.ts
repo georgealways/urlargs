@@ -1,13 +1,13 @@
 import { isTrue, validateBoolean, validateNumber } from './validators.js';
 
-const OPTIONAL_MARKER = Symbol( 'optional' );
+const NULLISH_MARKER = Symbol( 'nullish' );
 
-export class Optional<T, K extends null | undefined> {
+export class Nullish<T, K extends null | undefined> {
 	type: K;
 	parse: ( value: string ) => T;
 	validate: ( value: string ) => boolean;
 	defaultValue?: T;
-	[ OPTIONAL_MARKER ] = true;
+	[ NULLISH_MARKER ] = true;
 	constructor(
 		type: K,
 		parse = ( value: string ) => value as T,
@@ -21,28 +21,28 @@ export class Optional<T, K extends null | undefined> {
 	}
 }
 
-export const isOptional = ( value: any ): value is Optional<any, any> =>
-	value && ( typeof value === 'object' || typeof value === 'function' ) && OPTIONAL_MARKER in value;
+export const isNullish = ( value: any ): value is Nullish<any, any> =>
+	value && ( typeof value === 'object' || typeof value === 'function' ) && NULLISH_MARKER in value;
 
-const createOptional = <T, K extends null | undefined>(
+const createNullish = <T, K extends null | undefined>(
 	type: K,
 	parse = ( value: string ) => value as T,
 	validate = ( _: string ) => true,
 ) => {
-	const optional = new Optional<T, K>( type, parse, validate );
-	const fn = ( defaultValue: T ) => new Optional<T, K>( type, parse, validate, defaultValue );
-	return Object.assign( fn, optional );
+	const nullish = new Nullish<T, K>( type, parse, validate );
+	const fn = ( defaultValue: T ) => new Nullish<T, K>( type, parse, validate, defaultValue );
+	return Object.assign( fn, nullish );
 };
 
 export const $undefined = Object.freeze( {
-	number: createOptional<number, undefined>( undefined, Number, validateNumber ),
-	boolean: createOptional<boolean, undefined>( undefined, isTrue, validateBoolean ),
-	string: createOptional<string, undefined>( undefined ),
+	number: createNullish<number, undefined>( undefined, Number, validateNumber ),
+	boolean: createNullish<boolean, undefined>( undefined, isTrue, validateBoolean ),
+	string: createNullish<string, undefined>( undefined ),
 } );
 
 export const $null = Object.freeze( {
-	number: createOptional<number, null>( null, Number, validateNumber ),
-	boolean: createOptional<boolean, null>( null, isTrue, validateBoolean ),
-	string: createOptional<string, null>( null ),
+	number: createNullish<number, null>( null, Number, validateNumber ),
+	boolean: createNullish<boolean, null>( null, isTrue, validateBoolean ),
+	string: createNullish<string, null>( null ),
 } );
 
