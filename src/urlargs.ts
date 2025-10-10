@@ -1,6 +1,6 @@
 import type { DefaultValue, ResolveOptionals } from './types.js';
 
-import { Optional } from './optional.js';
+import { isOptional } from './optional.js';
 import { isTrue, validateBoolean, validateNumber } from './validators.js';
 
 /**
@@ -17,7 +17,18 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 
 	readonly values: ResolveOptionals<T>;
 
+	private validateDefaults( defaults: T ) {
+		for ( const [ key, defaultValue ] of Object.entries( defaults ) ) {
+			if ( isOptional( defaultValue ) ) continue;
+			const type = typeof defaultValue;
+			if ( ![ 'boolean', 'number', 'string' ].includes( type ) && !Array.isArray( defaultValue ) ) {
+				throw new Error( `Unsupported type for ${key}: ${type}` );
+			}
+		}
+	}
+
 	constructor( defaults: T, search = window.location.search ) {
+		this.validateDefaults( defaults );
 		this.defaults = defaults;
 		this.urlSearchParams = new URLSearchParams( search );
 		this.values = this.getValues();
@@ -30,8 +41,9 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 		for ( const [ key, defaultValue ] of Object.entries( this.defaults ) ) {
 
 			if ( !this.urlSearchParams.has( key ) ) {
-				if ( defaultValue instanceof Optional ) {
-					values[ key as keyof T ] = defaultValue.type as ResolveOptionals<T>[keyof T];
+				if ( isOptional( defaultValue ) ) {
+					const fallback = defaultValue.defaultValue ?? defaultValue.type;
+					values[ key as keyof T ] = fallback as ResolveOptionals<T>[keyof T];
 				} else {
 					values[ key as keyof T ] = defaultValue as ResolveOptionals<T>[keyof T];
 				}
@@ -50,8 +62,9 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 				}
 			};
 
-			if ( defaultValue instanceof Optional ) {
-				assign( defaultValue.parse( stringValue ), defaultValue.validate, defaultValue.type );
+			if ( isOptional( defaultValue ) ) {
+				const fallback = defaultValue.defaultValue ?? defaultValue.type;
+				assign( defaultValue.parse( stringValue ), defaultValue.validate, fallback );
 			} else if ( typeof defaultValue === 'boolean' )
 				assign( isTrue( stringValue ), validateBoolean, defaultValue );
 			else if ( typeof defaultValue === 'number' )
@@ -60,8 +73,6 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 				assign( stringValue, () => true, defaultValue );
 			else if ( Array.isArray( defaultValue ) )
 				assign( this.urlSearchParams.getAll( key ), () => true, defaultValue );
-			else
-				throw new Error( `Unsupported type for ${key}: ${typeof defaultValue}` );
 
 		}
 

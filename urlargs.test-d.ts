@@ -13,7 +13,6 @@ const args = new UrlArgs( {
 	myNull2: $null.string( 'test' ),
 	myUndefined: $undefined.number,
 	myEnum: 'a' as MyEnum,
-	myInvalid: undefined as number | undefined,
 } );
 
 expectType<string>( args.values.myString );
@@ -24,12 +23,8 @@ expectType<string | null>( args.values.myNull );
 expectType<string | null>( args.values.myNull2 );
 expectType<number | undefined>( args.values.myUndefined );
 expectType<MyEnum>( args.values.myEnum );
-expectType<number | undefined>( args.values.myInvalid );
 
-expectError( new UrlArgs( {
-	invalid: Symbol( 'invalid' )
-} ) );
-
-expectError( new UrlArgs( {
-	invalid: {}
-} ) );
+expectError( new UrlArgs( { invalid: undefined } ) );
+expectError( new UrlArgs( { invalid: null } ) );
+expectError( new UrlArgs( { invalid: {} } ) );
+expectError( new UrlArgs( { invalid: Symbol( 'invalid' ) } ) );

@@ -123,26 +123,50 @@ describe( 'UrlArgs', () => {
 	} );
 
 	it( 'should throw on unsupported type', () => {
-		window.location.search = '?foo=bar';
-		const defaults = { foo: {} };
 		// @ts-expect-error - should throw on unsupported type
-		expect( () => new UrlArgs( defaults ) ).toThrow();
+		expect( () => new UrlArgs( { foo: {} } ) ).toThrow();
+		// @ts-expect-error - should throw on unsupported type
+		expect( () => new UrlArgs( { foo: Symbol( 'foo' ) } ) ).toThrow();
+		// @ts-expect-error - should throw on unsupported type
+		expect( () => new UrlArgs( { foo: null } ) ).toThrow();
+		// @ts-expect-error - should throw on unsupported type
+		expect( () => new UrlArgs( { foo: undefined } ) ).toThrow();
+		// @ts-expect-error - should throw on unsupported type
+		expect( () => new UrlArgs( { foo: () => {} } ) ).toThrow();
 	} );
 
 	it( 'should handle undefined type', () => {
 		window.location.search = '?foo=2';
-		const args = new UrlArgs( {
+		const args1 = new UrlArgs( {
+			foo: $undefined.number,
+			bar: $undefined.number,
+		} );
+		expect( args1.values.foo ).toBe( 2 );
+		expect( args1.values.bar ).toBe( undefined );
+		window.location.search = '';
+		const args2 = new UrlArgs( {
 			foo: $undefined.number
 		} );
-		expect( args.values.foo ).toBe( 2 );
+		expect( args2.values.foo ).toBe( undefined );
 	} );
 
-	it( 'should handle undefined type', () => {
+	it( 'should handle optional with default value', () => {
 		window.location.search = '';
 		const args = new UrlArgs( {
-			foo: $undefined.number
+			foo: $null.string( 'test' ),
+			bar: $undefined.number( 42 ),
 		} );
-		expect( args.values.foo ).toBe( undefined );
+		expect( args.values.foo ).toBe( 'test' );
+		expect( args.values.bar ).toBe( 42 );
+	} );
+
+	it( 'should use optional default value on invalid input', () => {
+		const consoleWarnSpy = vi.spyOn( console, 'warn' ).mockImplementation( () => {} );
+		window.location.search = '?count=notanumber';
+		const args = new UrlArgs( { count: $null.number( 100 ) } );
+		expect( args.values.count ).toBe( 100 );
+		expect( consoleWarnSpy ).toHaveBeenCalled();
+		consoleWarnSpy.mockRestore();
 	} );
 
 } );

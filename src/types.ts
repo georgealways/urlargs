@@ -8,8 +8,6 @@ export type ResolveOptionals<T> = {
 };
 
 export type DefaultValue =
-	undefined
-	| null
 	| string
 	| number
 	| boolean
