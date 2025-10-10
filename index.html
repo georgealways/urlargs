@@ -33,13 +33,18 @@
 	<p>Click the links to change the URL arguments. Open your console to see argument descriptions.</p>
 
 	<script type="module">
-			import { UrlArgs } from './urlargs.ts';
+			import { UrlArgs, $undefined, $null, $array } from './src/index.ts';
 
 			const defaults = {
 				count: 10,
 				enabled: true,
 				name: 'test',
 				tags: [ 'a', 'b' ],
+				undefinedNumber: $undefined.number,
+				nullString: $null.string,
+				arrayNumber: $array.number,
+				arrayBoolean: $array.boolean,
+				arrayString: $array.string,
 			};
 
 			const args = new UrlArgs( defaults );
@@ -48,6 +53,11 @@
 				count: 'The number of items to display',
 				enabled: 'Whether the items are enabled',
 				name: 'The name of the items',
+				undefinedNumber: '$undefined.number test',
+				nullString: '$null.string test',
+				arrayNumber: '$array.number test',
+				arrayBoolean: '$array.boolean test',
+				arrayString: '$array.string test',
 			} );
 
 			window.args = args;

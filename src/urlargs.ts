@@ -143,7 +143,7 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 			styles.push( [
 				'font-weight: bold',
 				'color: #999',
-				defaultValue !== value ? 'font-weight: bold; color: #f70' : '',
+				!isDefaultValue ? 'font-weight: bold; color: #f70' : '',
 				'color: #999',
 			] );
 		}
