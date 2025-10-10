@@ -85,7 +85,7 @@ import { UrlArgs, $array } from 'urlargs';
 const args = new UrlArgs( {
 	numbers: $array.number,
 	booleans: $array.boolean,
-	strings: $array.string, // included for consistency, but not necessary
+	strings: $array.string, // included for consistency, equivalent to []
 } );
 ```
 
@@ -98,12 +98,11 @@ const args = new UrlArgs( {
 	theme: $allowed.string( 'light', 'dark', 'auto' ),
 	fontSize: $allowed.number( 12, 14, 16, 18 ),
 } );
-
-// if URL has ?theme=dark, then theme will be 'dark'
-// if URL has no theme param, then theme will default to 'light' (first value)
-// if URL has an invalid value like ?theme=blue, a warning will be shown and the default will be used
-// args.values.theme will be 'light' | 'dark' | 'auto'
 ```
+
+- If there is an invalid value like `?theme=blue`, a warning will be shown and the default will be used.
+- If there is no theme parameter, it will default to the first value.
+- Allowed types will be displayed by `describe()`.
 
 Available allowed types:
 - `$allowed.number( ...values )`

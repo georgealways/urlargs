@@ -12,6 +12,7 @@ const args = new UrlArgs( {
 	myNull: $null.string,
 	myNull2: $null.string( 'test' ),
 	myUndefined: $undefined.number,
+	myUndefined2: $undefined.number( 123 ),
 	myEnum: 'a' as MyEnum,
 	myNumberArray: $array.number,
 	myBooleanArray: $array.boolean,
@@ -26,6 +27,7 @@ expectType<string[]>( args.values.myArray );
 expectType<string | null>( args.values.myNull );
 expectType<string | null>( args.values.myNull2 );
 expectType<number | undefined>( args.values.myUndefined );
+expectType<number | undefined>( args.values.myUndefined2 );
 expectType<MyEnum>( args.values.myEnum );
 expectType<number[]>( args.values.myNumberArray );
 expectType<boolean[]>( args.values.myBooleanArray );
