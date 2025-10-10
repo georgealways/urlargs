@@ -110,7 +110,6 @@ export const $array = Object.freeze( {
 
 export const $allowed = Object.freeze( {
 	number: createAllowed<number>( 'number', Number, validateNumber ),
-	boolean: createAllowed<boolean>( 'boolean', isTrue, validateBoolean ),
 	string: createAllowed<string>( 'string', v => v, () => true ),
 } );
 

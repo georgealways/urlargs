@@ -107,7 +107,6 @@ const args = new UrlArgs( {
 
 Available allowed types:
 - `$allowed.number( ...values )`
-- `$allowed.boolean( ...values )`
 - `$allowed.string( ...values )`
 
 ## Documenting arguments
