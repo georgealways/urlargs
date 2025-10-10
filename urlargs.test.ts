@@ -114,6 +114,15 @@ describe( 'UrlArgs', () => {
 		expect( args.values.foo ).toEqual( [ 1, 2, 3 ] );
 	} );
 
+	it( 'should handle array number type with malformed input', () => {
+		const consoleWarnSpy = vi.spyOn( console, 'warn' ).mockImplementation( () => {} );
+		window.location.search = '?foo=1&foo=2&foo=3&foo=notanumber';
+		const args = new UrlArgs( { foo: $array.number( [ 2, 3, 4 ] ) } );
+		expect( args.values.foo ).toEqual( [ 2, 3, 4 ] );
+		expect( consoleWarnSpy ).toHaveBeenCalled();
+		consoleWarnSpy.mockRestore();
+	} );
+
 	it( 'should handle array boolean type', () => {
 		window.location.search = '?foo=true&foo=false&foo=true';
 		const args = new UrlArgs( { foo: $array.boolean } );

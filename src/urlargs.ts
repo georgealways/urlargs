@@ -17,30 +17,30 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 
 	readonly values: Readonly<ResolveSpecial<T>>;
 
-	private validateDefaults( defaults: T ) {
-		for ( const [ key, defaultValue ] of Object.entries( defaults ) ) {
-			if ( isNullish( defaultValue ) || isArray( defaultValue ) || isAllowed( defaultValue ) ) continue;
-			if ( defaultValue === undefined ) {
-				throw new Error( 'Use $undefined to allow undefined values' );
-			}
-			if ( defaultValue === null ) {
-				throw new Error( 'Use $null to allow null values' );
-			}
-			if ( Array.isArray( defaultValue ) && !defaultValue.every( v => typeof v === 'string' ) ) {
-				throw new Error( 'Use $array for non string[] arrays.' );
-			}
-			const type = typeof defaultValue;
-			if ( ![ 'boolean', 'number', 'string' ].includes( type ) && !Array.isArray( defaultValue ) ) {
-				throw new Error( `Unsupported type for ${key}: ${type}` );
-			}
-		}
-	}
-
 	constructor( defaults: T, search = window.location.search ) {
 		this.validateDefaults( defaults );
 		this.defaults = defaults;
 		this.urlSearchParams = new URLSearchParams( search );
 		this.values = this.getValues();
+	}
+
+	private validateDefaults( defaults: T ) {
+		for ( const [ key, arg ] of Object.entries( defaults ) ) {
+			if ( isSpecial( arg ) ) continue;
+			if ( arg === undefined ) {
+				throw new Error( 'Use $undefined to allow undefined values' );
+			}
+			if ( arg === null ) {
+				throw new Error( 'Use $null to allow null values' );
+			}
+			if ( Array.isArray( arg ) && !arg.every( v => typeof v === 'string' ) ) {
+				throw new Error( 'Use $array for non string[] arrays.' );
+			}
+			const type = typeof arg;
+			if ( ![ 'boolean', 'number', 'string' ].includes( type ) && !Array.isArray( arg ) ) {
+				throw new Error( `Unsupported type for ${key}: ${type}` );
+			}
+		}
 	}
 
 	private getValues() {
