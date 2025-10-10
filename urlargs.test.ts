@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { UrlArgs } from './dist/urlargs.js';
+import { $null, $undefined, UrlArgs } from './src/index.js';
 
 describe( 'UrlArgs', () => {
 
@@ -104,34 +104,10 @@ describe( 'UrlArgs', () => {
 		consoleSpy.mockRestore();
 	} );
 
-	it( 'should handle transforming values to a custom type', () => {
-		type MyType = { a: number, b: number };
-		window.location.search = '?myObj={"a":1,"b":2}';
-		const args = new UrlArgs( {
-			myObj: ( value?: string ): MyType => {
-				if ( !value ) return { a: 0, b: 0 };
-				return JSON.parse( value );
-			}
-		} );
-		expect( args.values.myObj ).toEqual( { a: 1, b: 2 } );
-	} );
-
-	it( 'should handle transforming values to a custom type with a default value', () => {
-		type MyType = { a: number, b: number };
-		window.location.search = '?notMentioned';
-		const args = new UrlArgs( {
-			myObj: ( value?: string ): MyType => {
-				if ( !value ) return { a: 30, b: 40 };
-				return JSON.parse( value );
-			}
-		} );
-		expect( args.values.myObj ).toEqual( { a: 30, b: 40 } );
-	} );
-
 	it( 'should not throw when describing a table with uneven rows', () => {
 		const defaults = {
 			name: 'test',
-			description: null,
+			description: $null.string,
 		};
 
 		const args = new UrlArgs( defaults, '' );
@@ -151,6 +127,22 @@ describe( 'UrlArgs', () => {
 		const defaults = { foo: {} };
 		// @ts-expect-error - should throw on unsupported type
 		expect( () => new UrlArgs( defaults ) ).toThrow();
+	} );
+
+	it( 'should handle undefined type', () => {
+		window.location.search = '?foo=2';
+		const args = new UrlArgs( {
+			foo: $undefined.number
+		} );
+		expect( args.values.foo ).toBe( 2 );
+	} );
+
+	it( 'should handle undefined type', () => {
+		window.location.search = '';
+		const args = new UrlArgs( {
+			foo: $undefined.number
+		} );
+		expect( args.values.foo ).toBe( undefined );
 	} );
 
 } );

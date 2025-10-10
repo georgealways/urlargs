@@ -5,23 +5,23 @@
   "author": "George Michael Brower",
   "license": "MIT",
   "type": "module",
-  "main": "./dist/urlargs.js",
-  "types": "./dist/urlargs.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/urlargs.js",
-      "types": "./dist/urlargs.d.ts",
-      "source": "./urlargs.ts"
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "source": "./src/index.ts"
     }
   },
   "files": [
     "dist",
-    "urlargs.ts",
+    "src",
     "README.md",
     "LICENSE.md"
   ],
   "scripts": {
-    "build": "tsc urlargs.ts --target esnext --declaration --outDir ./dist",
+    "build": "tsc src/index.ts --target esnext --declaration --outDir ./dist",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build && npm run test && npm run test:types",
     "lint": "eslint . --fix",

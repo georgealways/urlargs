@@ -50,23 +50,31 @@ Parameters that appear multiple times are collected into a string array.
 
 `?tags=a,b` → `['a,b']`
 
-## Transforming values
+## Optional types
 
-You can provide a function to transform the value before it is assigned to the argument. If the value is not present, the function will be called with no arguments, in which case you can return a default value.
+Use a special type when the default value is `undefined` or `null`. Without it, we can't infer the type of the parameter.
+
+```ts
+import { UrlArgs, $undefined, $null } from 'urlargs';
+
+const args = new UrlArgs( {
+	count: $undefined.number,
+	description: $null.string,
+} );
+
+// if URL has ?count=5, then count will be 5
+// if URL has no count param, then count will be undefined
+```
+
+If the default value is *not* `undefined` or `null`, just use a type assertion:
 
 ```ts
 const args = new UrlArgs( {
-	myObj: ( value?: string ) => {
-		return value ? JSON.parse( value ) : { a: 0, b: 0 };
-	},
+	count: 2 as number | undefined,
 } );
-
-// URL = website.com/?count=20&myObj={"a":1,"b":2}
-const { count, myObj } = args.values;
-
-// typeof myObj === 'object'
 ```
 
+Available optional types: `$undefined.number`, `$undefined.boolean`, `$undefined.string`, `$null.number`, `$null.boolean`, `$null.string`.
 
 ## Documenting arguments
 
