@@ -1,6 +1,6 @@
 import { expectError, expectType } from 'tsd';
 
-import { UrlArgs, $null } from './src/index.js';
+import { $null, $undefined, UrlArgs } from './src/index.js';
 
 type MyEnum = 'a' | 'b' | 'c';
 
@@ -10,8 +10,10 @@ const args = new UrlArgs( {
 	myBoolean: true,
 	myArray: [ 'a', 'b' ],
 	myNull: $null.string,
-	myUndefined: 2 as number | undefined,
+	myNull2: $null.string( 'test' ),
+	myUndefined: $undefined.number,
 	myEnum: 'a' as MyEnum,
+	myInvalid: undefined as number | undefined,
 } );
 
 expectType<string>( args.values.myString );
@@ -19,8 +21,10 @@ expectType<number>( args.values.myNumber );
 expectType<boolean>( args.values.myBoolean );
 expectType<string[]>( args.values.myArray );
 expectType<string | null>( args.values.myNull );
+expectType<string | null>( args.values.myNull2 );
 expectType<number | undefined>( args.values.myUndefined );
 expectType<MyEnum>( args.values.myEnum );
+expectType<number | undefined>( args.values.myInvalid );
 
 expectError( new UrlArgs( {
 	invalid: Symbol( 'invalid' )
