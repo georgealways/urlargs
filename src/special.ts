@@ -12,11 +12,11 @@ class BaseArg<T> {
 	) {}
 }
 
-export class NullishArg<T, K extends null | undefined> extends BaseArg<T> {
+export class NullishArg<T, K extends null | undefined> extends BaseArg<T | K> {
 	readonly [ NULLISH_MARKER ] = true;
 	constructor(
 		readonly defaultValue: T | K,
-		...args: ConstructorParameters<typeof BaseArg<T>>
+		...args: ConstructorParameters<typeof BaseArg<T | K>>
 	) {
 		super( ...args );
 	}
@@ -62,12 +62,21 @@ const createNullish = <T, K extends null | undefined>(
 	parse = ( value: string ) => value as T,
 	validate = ( _: string ) => true,
 ) => {
-	const nullish = new NullishArg<T, K>( type, typeLabel, parse, validate );
-	const fn = ( defaultValue: T | K ) => new NullishArg<T, K>( defaultValue, typeLabel, parse, validate );
+	const wrapParse = ( value: string ) => {
+		if ( value === 'null' ) return null as K;
+		if ( value === 'undefined' ) return undefined as K;
+		return parse( value );
+	};
+	const wrapValidate = ( value: string ) => {
+		if ( value === 'null' || value === 'undefined' ) return true;
+		return validate( value );
+	};
+	const nullish = new NullishArg<T, K>( type, typeLabel, wrapParse, wrapValidate );
+	const fn = ( defaultValue: T | K ) => new NullishArg<T, K>( defaultValue, typeLabel, wrapParse, wrapValidate );
 	return Object.assign( fn, nullish );
 };
 
-export const createArray = <T>(
+const createArray = <T>(
 	typeLabel: string,
 	parse = ( value: string ) => value as T,
 	validate = ( _: string ) => true,

@@ -185,6 +185,15 @@ describe( 'UrlArgs', () => {
 		consoleWarnSpy.mockRestore();
 	} );
 
+	it( 'should set nullish value via url', () => {
+		window.location.search = '?count=null';
+		let args = new UrlArgs( { count: $null.number( 100 ) } );
+		expect( args.values.count ).toBe( null );
+		window.location.search = '?count=undefined';
+		args = new UrlArgs( { count: $null.number( 100 ) } );
+		expect( args.values.count ).toBe( undefined );
+	} );
+
 	it( 'should handle array number type', () => {
 		window.location.search = '?foo=1&foo=2&foo=3';
 		const args = new UrlArgs( { foo: $array.number } );
