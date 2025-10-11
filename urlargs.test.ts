@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { $allowed, $array, $null, $undefined, UrlArgs } from './src/index.js';
+import { $allowed, $array, $json, $null, $undefined, UrlArgs } from './src/index.js';
 
 describe( 'UrlArgs', () => {
 
@@ -144,6 +144,42 @@ describe( 'UrlArgs', () => {
 	it( 'should handle array boolean with default value', () => {
 		const args = new UrlArgs( { foo: $array.boolean( [ true, false, true ] ) } );
 		expect( args.values.foo ).toEqual( [ true, false, true ] );
+	} );
+
+	// $json type
+	// ---------------------------------------------------------------------------
+
+	it( 'should handle json type', () => {
+		window.location.search = '?foo={"a":1,"b":2,"c":{"d":true}}';
+		type Type = {
+			a: number;
+			b: number;
+			c: {
+				d: boolean;
+			};
+		};
+		const def = { a: 1, b: 2, c: { d: false } };
+		const args = new UrlArgs( { foo: $json<Type>( def ) } );
+		expect( args.values.foo ).toEqual( { a: 1, b: 2, c: { d: true } } );
+	} );
+
+	it( 'should fall back to default json value if no value is provided', () => {
+		type Type = {
+			a: number;
+			b: number;
+			c: {
+				d: boolean;
+			};
+		};
+		const def = { a: 1, b: 2, c: { d: false } };
+		const args = new UrlArgs( { foo: $json<Type>( def ) } );
+		expect( args.values.foo ).toEqual( { a: 1, b: 2, c: { d: false } } );
+	} );
+
+	it( 'should handle json arrays', () => {
+		window.location.search = '?foo=[4,5,6]';
+		const args = new UrlArgs( { foo: $json( [ 1, 2, 3 ] ) } );
+		expect( args.values.foo ).toEqual( [ 4, 5, 6 ] );
 	} );
 
 	// comma array mode

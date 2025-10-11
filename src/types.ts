@@ -1,4 +1,4 @@
-import type { AllowedArg, ArrayArg, NullishArg } from './special.js';
+import type { AllowedArg, ArrayArg, JsonArg, NullishArg } from './special.js';
 
 export type ResolveSpecial<T> = {
 	[K in keyof T]:
@@ -7,7 +7,8 @@ export type ResolveSpecial<T> = {
 		: T[K] extends ArrayArg<infer A> ? A[]
 			: T[K] extends AllowedArg<any, infer A>
 				? ( A extends readonly ( infer L )[] ? L : never )
-				: T[K] extends boolean ? boolean : T[K]
+				: T[K] extends JsonArg<infer J> ? J
+					: T[K] extends boolean ? boolean : T[K]
 };
 
 export type AllowedPrimitives = string | number | boolean;
@@ -17,6 +18,7 @@ export type DefaultValue =
 	| NullishArg<AllowedPrimitives, undefined | null>
 	| ArrayArg<AllowedPrimitives>
 	| AllowedArg<AllowedPrimitives, readonly AllowedPrimitives[]>
+	| JsonArg<any>
 	| string[];
 
 export type ArrayMode = 'repeated' | 'comma';

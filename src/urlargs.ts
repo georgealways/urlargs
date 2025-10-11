@@ -1,6 +1,6 @@
 import type { AllowedPrimitives, ArrayMode, DefaultValue, ResolveSpecial } from './types.js';
 
-import { isAllowed, isArray, isNullish, isSpecial } from './special.js';
+import { isArray, isSpecial } from './special.js';
 import { isTrue, validateBoolean, validateNumber } from './validators.js';
 
 /**
@@ -75,13 +75,13 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 				values[ key as keyof T ] = defaultValue;
 			};
 
-			if ( isAllowed( arg ) || isNullish( arg ) ) {
-
-				assign( arg.parse( stringValue ), arg.validate, arg.defaultValue );
-
-			} else if ( isArray( arg ) ) {
+			if ( isArray( arg ) ) {
 
 				assign( arrayValue.map( arg.parse ), () => arrayValue.every( arg.validate ), arg.defaultValue );
+
+			} else if ( isSpecial( arg ) ) {
+
+				assign( arg.parse( stringValue ), arg.validate, arg.defaultValue );
 
 			} else if ( typeof arg === 'boolean' ) {
 

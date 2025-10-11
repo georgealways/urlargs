@@ -1,8 +1,13 @@
 import { expectError, expectType } from 'tsd';
 
-import { $allowed, $array, $null, $undefined, UrlArgs } from './src/index.js';
+import { $allowed, $array, $json, $null, $undefined, UrlArgs } from './src/index';
 
 type MyEnum = 'a' | 'b' | 'c';
+type JSONType = {
+	a: number;
+	b: number;
+	c: { d: boolean };
+};
 
 const args = new UrlArgs( {
 	myString: 'hello',
@@ -16,8 +21,13 @@ const args = new UrlArgs( {
 	myEnum: 'a' as MyEnum,
 	myNumberArray: $array.number,
 	myBooleanArray: $array.boolean,
-	myAllowedString: $allowed.string( 'a', 'b', 'c' ),
+	myAllowedString: $allowed.string( 'd', 'e', 'f' ),
 	myAllowedNumber: $allowed.number( 1, 2, 3 ),
+	myJson: $json<JSONType>( {
+		a: 1,
+		b: 2,
+		c: { d: false },
+	} )
 } );
 
 expectType<string>( args.values.myString );
@@ -31,10 +41,10 @@ expectType<number | undefined>( args.values.myUndefined2 );
 expectType<MyEnum>( args.values.myEnum );
 expectType<number[]>( args.values.myNumberArray );
 expectType<boolean[]>( args.values.myBooleanArray );
-expectType<'a' | 'b' | 'c'>( args.values.myAllowedString );
+expectType<'d' | 'e' | 'f'>( args.values.myAllowedString );
 expectType<1 | 2 | 3>( args.values.myAllowedNumber );
+expectType<JSONType>( args.values.myJson );
 
-// expected errors
 expectError( new UrlArgs( { invalid: undefined } ) );
 expectError( new UrlArgs( { invalid: null } ) );
 expectError( new UrlArgs( { invalid: {} } ) );

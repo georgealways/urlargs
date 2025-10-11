@@ -3,6 +3,7 @@ import { isTrue, validateBoolean, validateNumber } from './validators.js';
 const NULLISH_MARKER = Symbol( 'nullish' );
 const ARRAY_MARKER = Symbol( 'array' );
 const ALLOWED_MARKER = Symbol( 'allowed' );
+const JSON_MARKER = Symbol( 'json' );
 
 class BaseArg<T> {
 	constructor(
@@ -44,17 +45,30 @@ export class AllowedArg<T, A extends readonly T[] = T[]> extends BaseArg<T> {
 	}
 }
 
-export const isNullish = ( value: any ): value is NullishArg<any, any> =>
-	value && ( typeof value === 'object' || typeof value === 'function' ) && NULLISH_MARKER in value;
+export class JsonArg<T> extends BaseArg<T> {
+	readonly [ JSON_MARKER ] = true;
+	constructor(
+		readonly defaultValue: T,
+		...args: ConstructorParameters<typeof BaseArg<T>>
+	) {
+		super( ...args );
+	}
+}
 
-export const isArray = ( value: any ): value is ArrayArg<any> =>
-	value && ( typeof value === 'object' || typeof value === 'function' ) && ARRAY_MARKER in value;
+export const isNullish = ( v: any ): v is NullishArg<any, any> =>
+	v && ( typeof v === 'object' || typeof v === 'function' ) && NULLISH_MARKER in v;
 
-export const isAllowed = ( value: any ): value is AllowedArg<any> =>
-	value && ( typeof value === 'object' || typeof value === 'function' ) && ALLOWED_MARKER in value;
+export const isArray = ( v: any ): v is ArrayArg<any> =>
+	v && ( typeof v === 'object' || typeof v === 'function' ) && ARRAY_MARKER in v;
 
-export const isSpecial = ( value: any ): value is NullishArg<any, any> | ArrayArg<any> | AllowedArg<any> =>
-	isNullish( value ) || isArray( value ) || isAllowed( value );
+export const isAllowed = ( v: any ): v is AllowedArg<any> =>
+	v && ( typeof v === 'object' || typeof v === 'function' ) && ALLOWED_MARKER in v;
+
+export const isJson = ( v: any ): v is JsonArg<any> =>
+	v && ( typeof v === 'object' || typeof v === 'function' ) && JSON_MARKER in v;
+
+export const isSpecial = ( v: any ): v is NullishArg<any, any> | ArrayArg<any> | AllowedArg<any> | JsonArg<any> =>
+	isNullish( v ) || isArray( v ) || isAllowed( v ) || isJson( v );
 
 const createNullish = <T, K extends null | undefined>(
 	type: K,
@@ -121,4 +135,17 @@ export const $allowed = Object.freeze( {
 	number: createAllowed<number>( 'number', Number, validateNumber ),
 	string: createAllowed<string>( 'string', v => v, () => true ),
 } );
+
+export const $json = <T>( fallback: T ): JsonArg<T> => {
+	const parse = ( value: string ): T => JSON.parse( value );
+	const validate = ( value: string ): boolean => {
+		try {
+			JSON.parse( value );
+			return true;
+		} catch {
+			return false;
+		}
+	};
+	return new JsonArg<T>( fallback, 'json', parse, validate );
+};
 
