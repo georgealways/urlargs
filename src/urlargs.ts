@@ -1,4 +1,4 @@
-import type { AllowedPrimitives, ArrayMode, DefaultValue, ResolveSpecial } from './types.js';
+import type { ArrayMode, DefaultValue, ResolveSpecial } from './types.js';
 
 import { isArray, isSpecial } from './special.js';
 import { isTrue, validateBoolean, validateNumber } from './validators.js';
@@ -178,17 +178,23 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 	 * ```
 	 */
 	public describe( descriptions: Partial<Record<keyof T, string>> = {} ): void {
+
 		const keys = Object.keys( descriptions );
+
 		for ( const key of keys ) {
+
 			const description = ( descriptions[ key ] || '' ).trim();
-			let arg: DefaultValue | AllowedPrimitives[] | undefined | null = this.defaults[ key ];
+
+			let arg = this.defaults[ key ];
 			let type: string;
+
 			if ( isSpecial( arg ) ) {
 				type = arg.typeLabel;
 				arg = arg.defaultValue;
 			} else {
 				type = Array.isArray( arg ) ? 'string[]' : typeof arg;
 			}
+
 			const value = this.values[ key ];
 			const isDefaultValue = value === arg || arraysEqual( arg, value );
 
@@ -221,7 +227,9 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 			}
 
 			console.log( content, ...styles );
+
 		}
+
 	}
 
 	public describeAll( descriptions: Partial<Record<keyof T, string>> = {} ): void {
