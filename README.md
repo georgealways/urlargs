@@ -1,13 +1,21 @@
 # urlargs
 
-Utility for parsing URL query parameters with types.
+Type-safe utility for parsing URL query parameters.
+
+**Data Types:**
+- [Booleans](#booleans)
+- [Arrays](#arrays)
+- [Typed Arrays](#typed-arrays)
+- [Nullish Types](#nullish-types)
+- [Allowed Types](#allowed-types)
+- [JSON Types](#json-types)
 
 ## Usage
 
-```javascript
+```ts
 import { UrlArgs } from 'urlargs';
 
-// define default values
+// Define default values
 const args = new UrlArgs( {
 	enabled: false,
 	count: 10,
@@ -15,83 +23,93 @@ const args = new UrlArgs( {
 	tags: [ 'a', 'b' ],
 } );
 
-// URL = website.com/?count=20&enabled=false
-// get typed parameters based on the defaults
+// 🌐 Query: ?count=20&enabled=true&name=foo
+
+// Get typed parameters based on the defaults
 const { count, enabled, name, tags } = args.values;
+
+count → 20
+enabled → true
+name → 'foo'
+tags → [ 'a', 'b' ]
 ```
+
+## Documenting Arguments
+
+Generate a table of the parameters and their descriptions in the console with `describe()`:
+
+```ts
+args.describe( {
+	count: 'The number of items to display',
+	enabled: 'Whether the items are enabled',
+	name: 'The name of the items',
+} );
+```
+
+Values that differ from the defaults will be highlighted.
+
+![alt text](https://github.com/georgealways/urlargs/raw/main/screenshot.png "URL Arguments")
+
+# Data Types
+
+Whenever a parameter is invalid, a console warning will be shown and the default value will be used.
 
 ## Booleans
 
-URL parameters are considered `true` if set to any of the following values (case-insensitive): `true`, `1`, or if the key is present with no value.
+These are the valid values for booleans.
 
-- 🟢 `?enabled`
-- 🟢 `?enabled=`
-- 🟢 `?enabled=true`
-- 🟢 `?enabled=TRUE`
-- 🟢 `?enabled=1`
+| True | False |
+|------|-------|
+| 🟢 `?enabled=true` | 🔴 `?enabled=false` |
+| 🟢 `?enabled=TRUE` | 🔴 `?enabled=FALSE` |
+| 🟢 `?enabled=1` | 🔴 `?enabled=0` |
+| 🟢 `?enabled` | | 
+| 🟢 `?enabled=` | | 
 
-URL parameters are considered `false` if set to `false` or `0`.
-
-- 🔴 `?enabled=false`
-- 🔴 `?enabled=FALSE`
-- 🔴 `?enabled=0`
-
-> [!WARNING]
-> Any other value for a boolean will result in a console warning, and the default value will be used.
 
 ## Arrays
 
-Parameters that appear multiple times are collected into a string array.
+By default, parameters that appear multiple times are collected into a string array.
 
-`?tags=a&tags=b` → `['a', 'b']`
-
-> [!WARNING]
-> Arrays are NOT comma-separated! The following will NOT work:
-
-`?tags=a,b` → `['a,b']`
-
-## Nullish types
-
-Some types cannot be inferred from the default value, so we need to use special types.
-
-For types that can be `undefined` or `null`, use the `$undefined` or `$null` types.
-
+🌐 Query: `?tags=a&tags=b`
 ```ts
-import { UrlArgs, $undefined, $null } from 'urlargs';
-
-const args = new UrlArgs( {
-	count: $undefined.number,
-	description: $null.string,
-} );
+const args = new UrlArgs( { tags: [] } );
+args.values.tags → ['a', 'b']
 ```
 
-- `count` will be of type `number | undefined`.
-- If there is no count parameter, it will default to `undefined`.
-- If there is an invalid value like `?count=abc`, a warning will be shown and the default will be used.
+### Comma Mode
 
-Available nullish types: 
-- `$undefined.number`
-- `$undefined.boolean`
-- `$undefined.string`
-- `$null.number`
-- `$null.boolean`
-- `$null.string`
+By default, arrays use `repeated` mode. You can optionally enable `comma` mode to allow comma-separated arrays:
 
-## Array types
+🌐 Query: `?tags=a,b,c`
+```ts
+UrlArgs.arrayMode = 'comma';
+
+const args = new UrlArgs( { tags: [] } );
+args.values.tags → ['a', 'b', 'c']
+```
+
+In comma mode, you can escape commas with a backslash: `?tags=a,b\,c` → `['a', 'b,c']`
+
+## Typed Arrays
 
 By default, arrays are assumed to be `string[]`. To specify a different type, use the `$array` type.
 
+🌐 Query: `?numbers=1,2,3&booleans=true,false,true`
 ```ts
 import { UrlArgs, $array } from 'urlargs';
 
+UrlArgs.arrayMode = 'comma';
 const args = new UrlArgs( {
 	numbers: $array.number,
 	booleans: $array.boolean,
-	strings: $array.string, // included for consistency, equivalent to []
 } );
+
+args.values.numbers → [ 1, 2, 3 ]
+args.values.booleans → [ true, false, true ]
 ```
 
-## Allowed types
+## Allowed Types
 
 To restrict a parameter to a specific set of allowed values, use the `$allowed` type.
 
@@ -103,27 +121,66 @@ const args = new UrlArgs( {
 	fontSize: $allowed.number( 12, 14, 16, 18 ),
 } );
 ```
-- `theme` will be of type `'light' | 'dark' | 'auto'`.
-- If there is an invalid value like `?theme=blue`, a warning will be shown and the default will be used.
-- If there is no theme parameter, it will default to the first value.
-- Allowed types will be displayed by `describe()`.
+`$allowed` arguments will become a union type of the allowed values. They default to the first value. The list of allowed values will be displayed by `describe()`.
 
-Available allowed types:
-- `$allowed.number( ...values )`
-- `$allowed.string( ...values )`
+## Nullish Types
 
-## Documenting arguments
+For arguments that can be `undefined` or `null`, use the `$undefined` or `$null` types.
 
-UrlArgs can also generate a table of the parameters and their descriptions in the console:
-
+🌐 Query: `?count=2`
 ```ts
-args.describe( {
-	count: 'The number of items to display',
-	enabled: 'Whether the items are enabled',
-	name: 'The name of the items',
+import { UrlArgs, $undefined, $null } from 'urlargs';
+
+const args = new UrlArgs( {
+	count: $undefined.number,
+	description: $null.string,
 } );
+
+args.values.count → 2
+args.values.description → null
 ```
 
-This will produce output like this in the browser console. Values that differ from the defaults will be highlighted.
+Nullish types can have non-nullish defaults, which can then be overridden by the URL.
 
-![alt text](https://github.com/georgealways/urlargs/raw/main/screenshot.png "URL Arguments")
+🌐 Query: `?count=undefined`
+```ts
+const args = new UrlArgs( {
+	count: $undefined.number( 100 ),
+	description: $null.string,
+} );
+
+args.values.count → undefined
+args.values.description → null
+```
+
+| undefined|null|
+|---------------------|-----------------|
+| `$undefined.number` | `$null.number`  |
+| `$undefined.boolean`| `$null.boolean` |
+| `$undefined.string` | `$null.string`  |
+
+## JSON Types
+
+To parse JSON values from URL parameters, use the `$json` type.
+
+🌐 Query: `?config={ "w": 200, "h": 300, "info": { "on": true } }&items=[ 4, 5, 6 ]`
+
+```ts
+import { UrlArgs, $json } from 'urlargs';
+
+const args = new UrlArgs( {
+	config: $json( { 
+		w: 100, 
+		h: 100, 
+		info: { on: false } 
+	} ),
+	items: $json( [ 1, 2, 3 ] ),
+} );
+
+args.values.items → [ 4, 5, 6 ]
+args.values.config → { w: 200, h: 300, info: { on: true } }
+```
+
+`$json` types must specify a default value. They will inherit the type of the default value. 
+
+⚠️ **There is no schema validation with `$json`.** The only check is that the value is valid JSON.
