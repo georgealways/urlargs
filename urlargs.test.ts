@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { $allowed, $array, $null, $undefined, UrlArgs } from './src/index.js';
 
@@ -7,7 +7,12 @@ describe( 'UrlArgs', () => {
 	// mock browser environment
 	// ---------------------------------------------------------------------------
 
+	let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
+	let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+
 	beforeEach( () => {
+
+		// mock window.location.search
 		if ( typeof window === 'undefined' ) {
 			vi.stubGlobal( 'window', { location: { search: '' } } );
 		} else {
@@ -16,6 +21,19 @@ describe( 'UrlArgs', () => {
 				writable: true,
 			} );
 		}
+
+		// reset array mode
+		UrlArgs.arrayMode = UrlArgs.DEFAULT_ARRAY_MODE;
+
+		// spy on console.warn and console.log
+		consoleWarnSpy = vi.spyOn( console, 'warn' ).mockImplementation( () => {} );
+		consoleLogSpy = vi.spyOn( console, 'log' ).mockImplementation( () => {} );
+
+	} );
+
+	afterEach( () => {
+		consoleWarnSpy.mockRestore();
+		consoleLogSpy.mockRestore();
 	} );
 
 	// basic functionality
@@ -70,23 +88,19 @@ describe( 'UrlArgs', () => {
 		test( '?enabled=0', false );
 
 		// test invalid boolean value, should use default
-		const consoleWarnSpy = vi.spyOn( console, 'warn' ).mockImplementation( () => {} );
 		window.location.search = '?enabled=anythingElse';
 		args = new UrlArgs( { enabled: false } );
 		expect( args.values.enabled ).toBe( false );
 		args = new UrlArgs( { enabled: true } );
 		expect( args.values.enabled ).toBe( true );
 		expect( consoleWarnSpy ).toHaveBeenCalled();
-		consoleWarnSpy.mockRestore();
 	} );
 
 	it( 'should handle invalid number parameters', () => {
-		const consoleWarnSpy = vi.spyOn( console, 'warn' ).mockImplementation( () => {} );
 		window.location.search = '?count=notanumber';
 		const args = new UrlArgs( { count: 123 } );
 		expect( args.values.count ).toBe( 123 );
 		expect( consoleWarnSpy ).toHaveBeenCalled();
-		consoleWarnSpy.mockRestore();
 	} );
 
 	// array types
@@ -115,12 +129,10 @@ describe( 'UrlArgs', () => {
 	} );
 
 	it( 'should handle array number type with malformed input', () => {
-		const consoleWarnSpy = vi.spyOn( console, 'warn' ).mockImplementation( () => {} );
 		window.location.search = '?foo=1&foo=2&foo=3&foo=notanumber';
 		const args = new UrlArgs( { foo: $array.number( [ 2, 3, 4 ] ) } );
 		expect( args.values.foo ).toEqual( [ 2, 3, 4 ] );
 		expect( consoleWarnSpy ).toHaveBeenCalled();
-		consoleWarnSpy.mockRestore();
 	} );
 
 	it( 'should handle array boolean type', () => {
@@ -132,6 +144,57 @@ describe( 'UrlArgs', () => {
 	it( 'should handle array boolean with default value', () => {
 		const args = new UrlArgs( { foo: $array.boolean( [ true, false, true ] ) } );
 		expect( args.values.foo ).toEqual( [ true, false, true ] );
+	} );
+
+	// comma array mode
+	// ---------------------------------------------------------------------------
+
+	it( 'should handle comma array mode', () => {
+		UrlArgs.arrayMode = 'comma';
+		window.location.search = '?foo=a,b,c';
+		let args = new UrlArgs( { foo: [] } );
+		expect( args.values.foo ).toEqual( [ 'a', 'b', 'c' ] );
+	} );
+
+	it( 'should handle comma array mode with number array', () => {
+		UrlArgs.arrayMode = 'comma';
+		window.location.search = '?foo=1,2,3';
+		let args = new UrlArgs( { foo: $array.number } );
+		expect( args.values.foo ).toEqual( [ 1, 2, 3 ] );
+	} );
+
+	it( 'should handle comma array mode with escaped commas', () => {
+		UrlArgs.arrayMode = 'comma';
+
+		window.location.search = '?foo=a,b\\,c';
+		let args = new UrlArgs( { foo: [] } );
+		expect( args.values.foo ).toEqual( [ 'a', 'b,c' ] );
+
+		window.location.search = '?foo=a,b\\\\,c';
+		args = new UrlArgs( { foo: [] } );
+		expect( args.values.foo, ).toEqual( [ 'a', 'b\\\\', 'c' ] );
+	} );
+
+	it( 'should handle comma array mode with whitespace', () => {
+		UrlArgs.arrayMode = 'comma';
+		window.location.search = '?foo=  a,b, c';
+		let args = new UrlArgs( { foo: [] } );
+		expect( args.values.foo ).toEqual( [ 'a', 'b', 'c' ] );
+	} );
+
+	it( 'should handle comma array mode with trailing backslash', () => {
+		UrlArgs.arrayMode = 'comma';
+		window.location.search = '?foo=a,b\\';
+		let args = new UrlArgs( { foo: [] } );
+		expect( args.values.foo ).toEqual( [ 'a', 'b\\' ] );
+	} );
+
+	it( 'should assume repeated mode, even if comma mode is set', () => {
+		UrlArgs.arrayMode = 'comma';
+		window.location.search = '?foo=a&foo=b&foo=c';
+		let args = new UrlArgs( { foo: [] } );
+		expect( args.values.foo ).toEqual( [ 'a', 'b', 'c' ] );
+		expect( consoleWarnSpy ).toHaveBeenCalled();
 	} );
 
 	// $undefined and $null
@@ -165,12 +228,10 @@ describe( 'UrlArgs', () => {
 	} );
 
 	it( 'should use nullish default value on invalid input', () => {
-		const consoleWarnSpy = vi.spyOn( console, 'warn' ).mockImplementation( () => {} );
 		window.location.search = '?count=notanumber';
 		const args = new UrlArgs( { count: $null.number( 100 ) } );
 		expect( args.values.count ).toBe( 100 );
 		expect( consoleWarnSpy ).toHaveBeenCalled();
-		consoleWarnSpy.mockRestore();
 	} );
 
 	it( 'should set nullish value via url', () => {
@@ -194,11 +255,9 @@ describe( 'UrlArgs', () => {
 	} );
 
 	it( 'should warn on invalid allowed type', () => {
-		const consoleWarnSpy = vi.spyOn( console, 'warn' ).mockImplementation( () => {} );
 		window.location.search = '?foo=d';
 		new UrlArgs( { foo: $allowed.string( 'a', 'b', 'c' ) } );
 		expect( consoleWarnSpy ).toHaveBeenCalled();
-		consoleWarnSpy.mockRestore();
 	} );
 
 	// error handling
@@ -233,8 +292,6 @@ describe( 'UrlArgs', () => {
 		};
 		const args = new UrlArgs( defaults );
 
-		const consoleSpy = vi.spyOn( console, 'log' );
-
 		const descriptions = {
 			count: 'The number of items to display',
 			enabled: 'Whether the items are enabled',
@@ -248,20 +305,18 @@ describe( 'UrlArgs', () => {
 
 		args.describe( descriptions );
 
-		expect( consoleSpy ).toHaveBeenCalled();
-		consoleSpy.mockRestore();
+		expect( consoleLogSpy ).toHaveBeenCalled();
 	} );
 
 	it( 'should log the allowed types when describing', () => {
 		let logs: string[] = [];
-		const consoleLogSpy = vi.spyOn( console, 'log' ).mockImplementation( ( ...args ) => {
+		consoleLogSpy.mockImplementation( ( ...args ) => {
 			logs.push( args.join( ' ' ) );
 		} );
 		const allowed = [ 'a', 'b', 'c' ];
 		new UrlArgs( { foo: $allowed.string( ...allowed ) } ).describe( { foo: 'The foo parameter' } );
 		expect( consoleLogSpy ).toHaveBeenCalled();
 		expect( logs.some( log => log.includes( allowed.join( ', ' ) ) ) ).toBe( true );
-		consoleLogSpy.mockRestore();
 	} );
 
 } );

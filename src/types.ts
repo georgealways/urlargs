@@ -19,3 +19,4 @@ export type DefaultValue =
 	| AllowedArg<AllowedPrimitives, readonly AllowedPrimitives[]>
 	| string[];
 
+export type ArrayMode = 'repeated' | 'comma';

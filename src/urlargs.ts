@@ -1,4 +1,4 @@
-import type { AllowedPrimitives, DefaultValue, ResolveSpecial } from './types.js';
+import type { AllowedPrimitives, ArrayMode, DefaultValue, ResolveSpecial } from './types.js';
 
 import { isAllowed, isArray, isNullish, isSpecial } from './special.js';
 import { isTrue, validateBoolean, validateNumber } from './validators.js';
@@ -16,6 +16,9 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 	private readonly defaults: T;
 
 	readonly values: Readonly<ResolveSpecial<T>>;
+
+	static readonly DEFAULT_ARRAY_MODE: ArrayMode = 'repeated';
+	static arrayMode: ArrayMode = UrlArgs.DEFAULT_ARRAY_MODE;
 
 	constructor( defaults: T, search = window.location.search ) {
 		this.validateDefaults( defaults );
@@ -56,7 +59,7 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 			}
 
 			const stringValue = this.urlSearchParams.get( key )!;
-			const arrayValue = this.urlSearchParams.getAll( key );
+			const arrayValue = this.parseArray( key );
 
 			const assign = (
 				parsedValue: any,
@@ -102,6 +105,59 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 
 		return values;
 
+	}
+
+	private parseArray( key: string ) {
+
+		const value = this.urlSearchParams.get( key );
+		if ( !value ) return [];
+
+		const repeated = this.urlSearchParams.getAll( key );
+
+		if ( repeated.length > 1 && UrlArgs.arrayMode === 'comma' ) {
+			console.warn( `Repeated array mode detected for ${key}, but comma mode is set` );
+			console.warn( 'Using repeated mode instead' );
+			return repeated;
+		}
+
+		if ( UrlArgs.arrayMode === 'repeated' ) {
+			return repeated;
+		}
+
+		return this.parseCommaArray( value );
+
+	}
+
+	private parseCommaArray( input: string ) {
+		const parts: string[] = [];
+		let current = '';
+		let escaped = false;
+
+		// unlikely to appear in real text
+		const BACKSLASH_PLACEHOLDER = '\u0000';
+		input = input.replace( /\\\\/g, BACKSLASH_PLACEHOLDER );
+
+		for ( const char of input ) {
+			if ( char === '\\' && !escaped ) {
+				escaped = true;
+			} else if ( char === ',' && !escaped ) {
+				parts.push( current.trim() );
+				current = '';
+			} else {
+				current += char;
+				escaped = false;
+			}
+		}
+
+		// handle trailing data
+		if ( escaped ) current += '\\';
+		if ( current.length > 0 ) parts.push( current.trim() );
+
+		// restore real backslashes, unescape commas
+		return parts.map( s => s
+			.replace( new RegExp( BACKSLASH_PLACEHOLDER, 'g' ), '\\\\' )
+			.replace( /\\,/g, ',' )
+		);
 	}
 
 	/**
