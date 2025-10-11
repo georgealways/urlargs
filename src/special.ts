@@ -12,11 +12,11 @@ class BaseArg<T> {
 	) {}
 }
 
-export class NullishArg<T, K extends null | undefined> extends BaseArg<T | K> {
+export class NullishArg<T, K extends null | undefined> extends BaseArg<T> {
 	readonly [ NULLISH_MARKER ] = true;
 	constructor(
 		readonly defaultValue: T | K,
-		...args: ConstructorParameters<typeof BaseArg<T | K>>
+		...args: ConstructorParameters<typeof BaseArg<T>>
 	) {
 		super( ...args );
 	}
@@ -62,9 +62,9 @@ const createNullish = <T, K extends null | undefined>(
 	parse = ( value: string ) => value as T,
 	validate = ( _: string ) => true,
 ) => {
-	const wrapParse = ( value: string ) => {
-		if ( value === 'null' ) return null as K;
-		if ( value === 'undefined' ) return undefined as K;
+	const wrapParse = ( value: string ): T => {
+		if ( value === 'null' ) return null as T;
+		if ( value === 'undefined' ) return undefined as T;
 		return parse( value );
 	};
 	const wrapValidate = ( value: string ) => {
