@@ -105,7 +105,7 @@ const createAllowed = <T extends string | number | boolean>(
 	parse: ( value: string ) => T,
 	baseValidate: ( value: string ) => boolean,
 ) => <const A extends readonly T[]>( ...allowed: A ) => {
-	const typeLabel = `${baseTypeLabel} (${allowed.join( ', ' )})`;
+	const typeLabel = `${JSON.stringify( allowed )}`;
 	const validate = ( value: string ) => {
 		const parsed = parse( value );
 		return baseValidate( value ) && allowed.includes( parsed );

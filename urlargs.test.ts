@@ -349,10 +349,10 @@ describe( 'UrlArgs', () => {
 		consoleLogSpy.mockImplementation( ( ...args ) => {
 			logs.push( args.join( ' ' ) );
 		} );
-		const allowed = [ 'a', 'b', 'c' ];
+		const allowed = [ 'ONE', 'TWO', 'THREE' ];
 		new UrlArgs( { foo: $allowed.string( ...allowed ) } ).describe( { foo: 'The foo parameter' } );
 		expect( consoleLogSpy ).toHaveBeenCalled();
-		expect( logs.some( log => log.includes( allowed.join( ', ' ) ) ) ).toBe( true );
+		expect( logs.some( log => allowed.every( a => log.includes( a ) ) ) ).toBe( true );
 	} );
 
 } );

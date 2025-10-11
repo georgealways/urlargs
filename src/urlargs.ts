@@ -195,21 +195,26 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 			const valueStr = this.truncate( this.stringify( value ) );
 			const valueStyle = !isDefaultValue ? 'font-weight: bold; color: #f70' : '';
 
-			let secondLine = type + ' ·';
-			if ( !isDefaultValue ) {
-				const defaultStr = this.stringify( arg );
-				secondLine += ` (default: ${defaultStr})`;
-			}
+			let secondLine = '';
 			if ( description.trim() ) {
-				secondLine += ` ${description.trim()}`;
+				secondLine += description.trim();
 			}
 
-			console.log( `%c${key}: %c${valueStr}`, 'font-weight: bold', valueStyle );
-			console.log(
-				` %c└─ ${type}%c${secondLine.substring( type.length )}`,
-				'font-style: italic; color: #999',
-				'color: #999'
-			);
+			const toPrint = [
+				`%c${key}: %c${valueStr}%c • ${type} • %c${secondLine}`,
+				'font-weight: bold',
+				valueStyle,
+				'color: #999',
+				'color: #ddd',
+			];
+
+			if ( !isDefaultValue ) {
+				const defaultStr = this.stringify( arg );
+				toPrint[ 0 ] += ` %c[default: ${defaultStr}]`;
+				toPrint.push( 'font-weight: bold; color: #f70' );
+			}
+
+			console.log( ...toPrint );
 		}
 	}
 
