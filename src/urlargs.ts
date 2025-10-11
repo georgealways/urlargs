@@ -161,7 +161,7 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 	}
 
 	/**
-	 * Describe the URL arguments in a table format.
+	 * Print descriptions of the specified URL arguments to the console.
 	 * ```ts
 	 * const args = new UrlArgs( {
 	 *   count: 10,
@@ -232,6 +232,10 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 
 	}
 
+	/**
+	 * Print descriptions of all the URL arguments to the console. Differs from `describe()`
+	 * in that it logs all the available arguments, not just those with descriptions.
+	 */
 	public describeAll( descriptions: Partial<Record<keyof T, string>> = {} ): void {
 		const all = {} as Record<keyof T, string>;
 		for ( const key of Object.keys( this.defaults ) ) {
