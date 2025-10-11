@@ -105,7 +105,8 @@ const createAllowed = <T extends string | number | boolean>(
 	parse: ( value: string ) => T,
 	baseValidate: ( value: string ) => boolean,
 ) => <const A extends readonly T[]>( ...allowed: A ) => {
-	const typeLabel = `${JSON.stringify( allowed )}`;
+	const typeLabel = allowed.map( v => JSON.stringify( v ) ).join( '|' );
+
 	const validate = ( value: string ) => {
 		const parsed = parse( value );
 		return baseValidate( value ) && allowed.includes( parsed );
@@ -114,15 +115,15 @@ const createAllowed = <T extends string | number | boolean>(
 };
 
 export const $undefined = Object.freeze( {
-	number: createNullish<number, undefined>( undefined, 'undefined | number', Number, validateNumber ),
-	boolean: createNullish<boolean, undefined>( undefined, 'undefined | boolean', isTrue, validateBoolean ),
-	string: createNullish<string, undefined>( undefined, 'undefined | string' ),
+	number: createNullish<number, undefined>( undefined, 'number|undefined', Number, validateNumber ),
+	boolean: createNullish<boolean, undefined>( undefined, 'boolean|undefined', isTrue, validateBoolean ),
+	string: createNullish<string, undefined>( undefined, 'string|undefined' ),
 } );
 
 export const $null = Object.freeze( {
-	number: createNullish<number, null>( null, 'null | number', Number, validateNumber ),
-	boolean: createNullish<boolean, null>( null, 'null | boolean', isTrue, validateBoolean ),
-	string: createNullish<string, null>( null, 'null | string' ),
+	number: createNullish<number, null>( null, 'number|null', Number, validateNumber ),
+	boolean: createNullish<boolean, null>( null, 'boolean|null', isTrue, validateBoolean ),
+	string: createNullish<string, null>( null, 'string|null' ),
 } );
 
 export const $array = Object.freeze( {

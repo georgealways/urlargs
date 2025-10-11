@@ -193,28 +193,30 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 			const isDefaultValue = value === arg || arraysEqual( arg, value );
 
 			const valueStr = this.truncate( this.stringify( value ) );
-			const valueStyle = !isDefaultValue ? 'font-weight: bold; color: #f70' : '';
+			const secondLine = description.trim();
 
-			let secondLine = '';
-			if ( description.trim() ) {
-				secondLine += description.trim();
-			}
+			const styles: string[] = [];
 
-			const toPrint = [
-				`%c${key}: %c${valueStr}%c • ${type} • %c${secondLine}`,
-				'font-weight: bold',
-				valueStyle,
-				'color: #999',
-				'color: #ddd',
-			];
+			let content = `%c${key}: `;
+			styles.push( 'font-weight: bold' );
 
 			if ( !isDefaultValue ) {
-				const defaultStr = this.stringify( arg );
-				toPrint[ 0 ] += ` %c[default: ${defaultStr}]`;
-				toPrint.push( 'font-weight: bold; color: #f70' );
+				content += `%c${this.stringify( arg )}`;
+				styles.push( 'color: #a6f8; text-decoration: line-through' );
+				content += `%c ${valueStr}`;
+				styles.push( 'font-weight: bold; color: #f70' );
+			} else {
+				content += `%c${valueStr}`;
+				styles.push( 'color: #a6f' );
 			}
 
-			console.log( ...toPrint );
+			content += `%c · ${type} · `;
+			styles.push( 'color: #999' );
+
+			content += `%c${secondLine}`;
+			styles.push( 'color: #ddd' );
+
+			console.log( content, ...styles );
 		}
 	}
 
