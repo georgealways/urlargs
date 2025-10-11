@@ -13,3 +13,20 @@ export const validateNumber = ( value: string ): boolean => {
 export const isTrue = ( value: string ): boolean => {
 	return TRUE_VALUES.includes( value.toLowerCase() );
 };
+
+export const arraysEqual = ( a: any, b: any ): boolean => {
+	if ( Array.isArray( a ) && Array.isArray( b ) ) {
+		return a.every( ( value, index ) => value === b[ index ] );
+	}
+	return false;
+};
+
+export const stringify = ( value: any ): string => {
+	if ( value === null ) return 'null';
+	if ( value === undefined ) return 'undefined';
+	return JSON.stringify( value );
+};
+
+export const truncate = ( str: string, maxLength = 40 ): string => {
+	return str.length > maxLength ? str.substring( 0, maxLength ) + '…' : str;
+};

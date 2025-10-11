@@ -1,7 +1,7 @@
 import type { ArrayMode, DefaultValue, ResolveSpecial } from './types.js';
 
 import { isArray, isSpecial } from './special.js';
-import { isTrue, validateBoolean, validateNumber } from './utils.js';
+import { arraysEqual, isTrue, stringify, truncate, validateBoolean, validateNumber } from './utils.js';
 
 /**
  * Parses URL query parameters into a typed object.
@@ -186,20 +186,17 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 			const description = ( descriptions[ key ] || '' ).trim();
 
 			let arg = this.defaults[ key ];
-			let type: string;
+			let type = Array.isArray( arg ) ? 'string[]' : typeof arg;
 
 			if ( isSpecial( arg ) ) {
 				type = arg.typeLabel;
 				arg = arg.defaultValue;
-			} else {
-				type = Array.isArray( arg ) ? 'string[]' : typeof arg;
 			}
 
 			const value = this.values[ key ];
 			const isDefaultValue = value === arg || arraysEqual( arg, value );
 
-			const valueStr = this.truncate( this.stringify( value ) );
-
+			const valueStr = truncate( stringify( value ) );
 			const styles: string[] = [];
 
 			let content = `%c${key}: `;
@@ -210,7 +207,7 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 				content += `%c${valueStr}`;
 				styles.push( 'font-weight: bold; color: #f70' );
 
-				content += ` %c${this.stringify( arg )}`;
+				content += ` %c${stringify( arg )}`;
 				styles.push( 'color: #a6f7; text-decoration: line-through' );
 
 			} else {
@@ -244,21 +241,4 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 		this.describe( all );
 	}
 
-	private stringify( value: any ): string {
-		if ( value === null ) return 'null';
-		if ( value === undefined ) return 'undefined';
-		return JSON.stringify( value );
-	}
-
-	private truncate( str: string, maxLength = 40 ): string {
-		return str.length > maxLength ? str.substring( 0, maxLength ) + '…' : str;
-	}
-
 }
-
-const arraysEqual = ( a: any, b: any ): boolean => {
-	if ( Array.isArray( a ) && Array.isArray( b ) ) {
-		return a.every( ( value, index ) => value === b[ index ] );
-	}
-	return false;
-};
