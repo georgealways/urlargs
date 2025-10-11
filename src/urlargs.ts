@@ -180,7 +180,7 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 	public describe( descriptions: Partial<Record<keyof T, string>> = {} ): void {
 		const keys = Object.keys( descriptions );
 		for ( const key of keys ) {
-			const description = descriptions[ key ] || '';
+			const description = ( descriptions[ key ] || '' ).trim();
 			let arg: DefaultValue | AllowedPrimitives[] | undefined | null = this.defaults[ key ];
 			let type: string;
 			if ( isSpecial( arg ) ) {
@@ -193,7 +193,6 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 			const isDefaultValue = value === arg || arraysEqual( arg, value );
 
 			const valueStr = this.truncate( this.stringify( value ) );
-			const secondLine = description.trim();
 
 			const styles: string[] = [];
 
@@ -201,23 +200,36 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 			styles.push( 'font-weight: bold' );
 
 			if ( !isDefaultValue ) {
-				content += `%c${this.stringify( arg )}`;
-				styles.push( 'color: #a6f8; text-decoration: line-through' );
-				content += `%c ${valueStr}`;
+
+				content += `%c${valueStr}`;
 				styles.push( 'font-weight: bold; color: #f70' );
+
+				content += ` %c${this.stringify( arg )}`;
+				styles.push( 'color: #a6f7; text-decoration: line-through' );
+
 			} else {
 				content += `%c${valueStr}`;
 				styles.push( 'color: #a6f' );
 			}
 
-			content += `%c · ${type} · `;
+			content += `%c · ${type}`;
 			styles.push( 'color: #999' );
 
-			content += `%c${secondLine}`;
-			styles.push( 'color: #ddd' );
+			if ( description ) {
+				content += `%c · ${description}`;
+				styles.push( 'color: #ddd' );
+			}
 
 			console.log( content, ...styles );
 		}
+	}
+
+	public describeAll( descriptions: Partial<Record<keyof T, string>> = {} ): void {
+		const all = {} as Record<keyof T, string>;
+		for ( const key of Object.keys( this.defaults ) ) {
+			all[ key as keyof T ] = descriptions[ key ] || '';
+		}
+		this.describe( all );
 	}
 
 	private stringify( value: any ): string {

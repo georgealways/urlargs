@@ -35,6 +35,13 @@
 		</a>
 	</p>
 
+	<!-- Overriding Nullish -->
+	<p>
+		Overriding Nullish: <a href="?undefNum=undefined">
+			/?undefNum=undefined
+		</a>
+	</p>
+
 	<hr>
 
 	<p>Click the links to change the URL arguments. Open your console to see argument descriptions.</p>
@@ -47,7 +54,7 @@
 				enabled: true,
 				name: 'test',
 				tags: [ 'a', 'b' ],
-				undefNum: $undefined.number,
+				undefNum: $undefined.number( 100 ),
 				nullStr: $null.string,
 				arrayNum: $array.number,
 				arrayBool: $array.boolean,
@@ -59,7 +66,7 @@
 
 			const args = new UrlArgs( defaults );
 
-			args.describe( {
+			args.describeAll( {
 				count: 'The number of items to display',
 				enabled: 'Whether the items are enabled',
 				name: 'The name of the items',
