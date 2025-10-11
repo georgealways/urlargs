@@ -1,4 +1,4 @@
-import { expectError, expectType } from 'tsd';
+import { expectType } from 'tsd';
 
 import { $allowed, $array, $json, $null, $undefined, UrlArgs } from './src/index';
 
@@ -45,7 +45,11 @@ expectType<'d' | 'e' | 'f'>( args.values.myAllowedString );
 expectType<1 | 2 | 3>( args.values.myAllowedNumber );
 expectType<JSONType>( args.values.myJson );
 
-expectError( new UrlArgs( { invalid: undefined } ) );
-expectError( new UrlArgs( { invalid: null } ) );
-expectError( new UrlArgs( { invalid: {} } ) );
-expectError( new UrlArgs( { invalid: Symbol( 'invalid' ) } ) );
+// @ts-expect-error
+new UrlArgs( { invalid: undefined } );
+// @ts-expect-error
+new UrlArgs( { invalid: null } );
+// @ts-expect-error
+new UrlArgs( { invalid: {} } );
+// @ts-expect-error
+new UrlArgs( { invalid: Symbol( 'invalid' ) } );
