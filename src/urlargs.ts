@@ -71,7 +71,7 @@ export class UrlArgs<T extends Record<string, DefaultValue>> {
 					return;
 				}
 				console.warn( `Invalid URL argument for ${key}: "${stringValue}"` );
-				console.warn( `Using default value: ${JSON.stringify( defaultValue )}` );
+				console.warn( `Using default value: ${stringify( defaultValue )}` );
 				values[ key as keyof T ] = defaultValue;
 			};
 
