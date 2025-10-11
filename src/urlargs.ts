@@ -1,7 +1,7 @@
 import type { ArrayMode, DefaultValue, ResolveSpecial } from './types.js';
 
 import { isArray, isSpecial } from './special.js';
-import { isTrue, validateBoolean, validateNumber } from './validators.js';
+import { isTrue, validateBoolean, validateNumber } from './utils.js';
 
 /**
  * Parses URL query parameters into a typed object.

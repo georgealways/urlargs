@@ -1,4 +1,6 @@
-import { isTrue, validateBoolean, validateNumber } from './validators.js';
+import type { AllowedPrimitives } from './types.js';
+
+import { isTrue, validateBoolean, validateNumber } from './utils.js';
 
 const NULLISH_MARKER = Symbol( 'nullish' );
 const ARRAY_MARKER = Symbol( 'array' );
@@ -56,16 +58,16 @@ export class JsonArg<T> extends BaseArg<T> {
 }
 
 export const isNullish = ( v: any ): v is NullishArg<any, any> =>
-	v && ( typeof v === 'object' || typeof v === 'function' ) && NULLISH_MARKER in v;
+	( typeof v === 'object' || typeof v === 'function' ) && NULLISH_MARKER in v;
 
 export const isArray = ( v: any ): v is ArrayArg<any> =>
-	v && ( typeof v === 'object' || typeof v === 'function' ) && ARRAY_MARKER in v;
+	( typeof v === 'object' || typeof v === 'function' ) && ARRAY_MARKER in v;
 
 export const isAllowed = ( v: any ): v is AllowedArg<any> =>
-	v && ( typeof v === 'object' || typeof v === 'function' ) && ALLOWED_MARKER in v;
+	( typeof v === 'object' || typeof v === 'function' ) && ALLOWED_MARKER in v;
 
 export const isJson = ( v: any ): v is JsonArg<any> =>
-	v && ( typeof v === 'object' || typeof v === 'function' ) && JSON_MARKER in v;
+	( typeof v === 'object' || typeof v === 'function' ) && JSON_MARKER in v;
 
 export const isSpecial = ( v: any ): v is NullishArg<any, any> | ArrayArg<any> | AllowedArg<any> | JsonArg<any> =>
 	isNullish( v ) || isArray( v ) || isAllowed( v ) || isJson( v );
@@ -100,13 +102,11 @@ const createArray = <T>(
 	return Object.assign( fn, array );
 };
 
-const createAllowed = <T extends string | number | boolean>(
-	baseTypeLabel: string,
+const createAllowed = <T extends AllowedPrimitives>(
 	parse: ( value: string ) => T,
 	baseValidate: ( value: string ) => boolean,
 ) => <const A extends readonly T[]>( ...allowed: A ) => {
 	const typeLabel = allowed.map( v => JSON.stringify( v ) ).join( '|' );
-
 	const validate = ( value: string ) => {
 		const parsed = parse( value );
 		return baseValidate( value ) && allowed.includes( parsed );
@@ -133,8 +133,8 @@ export const $array = Object.freeze( {
 } );
 
 export const $allowed = Object.freeze( {
-	number: createAllowed<number>( 'number', Number, validateNumber ),
-	string: createAllowed<string>( 'string', v => v, () => true ),
+	number: createAllowed<number>( Number, validateNumber ),
+	string: createAllowed<string>( v => v, () => true ),
 } );
 
 export const $json = <T>( fallback: T ): JsonArg<T> => {
@@ -147,6 +147,6 @@ export const $json = <T>( fallback: T ): JsonArg<T> => {
 			return false;
 		}
 	};
-	return new JsonArg<T>( fallback, 'json', parse, validate );
+	return new JsonArg( fallback, 'json', parse, validate );
 };
 
