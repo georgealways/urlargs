@@ -4,11 +4,11 @@ Type-safe utility for parsing URL query parameters.
 
 - [Quick start](#quick-start)
 - [Argument types](#argument-types)
-	- [Primitives](#primitives)
-	- [Arrays](#arrays)
-	- [Optional and nullable](#optional-and-nullable)
-	- [One of (enum)](#one-of-enum)
-	- [JSON](#json)
+  - [Primitives](#primitives)
+  - [Arrays](#arrays)
+  - [Optional and nullable](#optional-and-nullable)
+  - [One of (enum)](#one-of-enum)
+  - [JSON](#json)
 - [Array modes](#array-modes)
 - [Re-parsing](#re-parsing)
 - [Options](#options)
@@ -21,9 +21,9 @@ Type-safe utility for parsing URL query parameters.
 import { UrlArgs } from 'urlargs';
 
 const args = new UrlArgs( {
-	enabled: false,
-	count:   10,
-	name:    'test',
+  enabled: false,
+  count:   10,
+  name:    'test',
 } );
 
 // 🌐 ?count=20&enabled=true&name=foo
@@ -42,15 +42,15 @@ Use the `u` namespace to declare anything more complex than a plain primitive de
 import { UrlArgs, u } from 'urlargs';
 
 const args = new UrlArgs( {
-	count:    10,                                 // number
-	name:     'test',                             // string
-	enabled:  true,                               // boolean
-	tags:     u.array( [ 'a', 'b' ] ),            // string[] (default [ 'a', 'b' ])
-	scores:   u.array( u.number() ),              // number[] (default [])
-	port:     u.optional( u.number() ),           // number | undefined
-	bio:      u.nullable( u.string() ),           // string | null
-	theme:    u.oneof( [ 'light', 'dark' ] ),     // 'light' | 'dark'
-	config:   u.json<Config>( defaultConfig ),    // Config
+  count:    10,                                 // number
+  name:     'test',                             // string
+  enabled:  true,                               // boolean
+  tags:     u.array( [ 'a', 'b' ] ),            // string[] (default [ 'a', 'b' ])
+  scores:   u.array( u.number() ),              // number[] (default [])
+  port:     u.optional( u.number() ),           // number | undefined
+  bio:      u.nullable( u.string() ),           // string | null
+  theme:    u.oneof( [ 'light', 'dark' ] ),     // 'light' | 'dark'
+  config:   u.json<Config>( defaultConfig ),    // Config
 } );
 ```
 
@@ -60,9 +60,9 @@ Plain values become typed arguments with that value as the default:
 
 ```ts
 new UrlArgs( {
-	count:   10,       // number
-	name:    'test',   // string
-	enabled: true,     // boolean
+  count:   10,       // number
+  name:    'test',   // string
+  enabled: true,     // boolean
 } );
 ```
 
@@ -84,9 +84,9 @@ These URL values are accepted:
 
 ```ts
 new UrlArgs( {
-	tags:    u.array( [ 'a', 'b' ] ),     // string[]
-	scores:  u.array( [ 1, 2, 3 ] ),      // number[]
-	flags:   u.array( [ true, false ] ),  // boolean[]
+  tags:    u.array( [ 'a', 'b' ] ),     // string[]
+  scores:  u.array( [ 1, 2, 3 ] ),      // number[]
+  flags:   u.array( [ true, false ] ),  // boolean[]
 } );
 ```
 
@@ -94,9 +94,9 @@ For an empty array, pass an explicit element type:
 
 ```ts
 new UrlArgs( {
-	tags:    u.array( u.string() ),    // string[]
-	scores:  u.array( u.number() ),    // number[]
-	flags:   u.array( u.boolean() ),   // boolean[]
+  tags:    u.array( u.string() ),    // string[]
+  scores:  u.array( u.number() ),    // number[]
+  flags:   u.array( u.boolean() ),   // boolean[]
 } );
 ```
 
@@ -116,10 +116,10 @@ See [array modes](#array-modes) to change this behavior.
 
 ```ts
 new UrlArgs( {
-	port:    u.optional( u.number() ),               // number | undefined
-	bio:     u.nullable( u.string() ),               // string | null
-	tags:    u.optional( u.array( u.string() ) ),    // string[] | undefined
-	theme:   u.nullable( u.oneof( [ 'a', 'b' ] ) ),  // 'a' | 'b' | null
+  port:    u.optional( u.number() ),               // number | undefined
+  bio:     u.nullable( u.string() ),               // string | null
+  tags:    u.optional( u.array( u.string() ) ),    // string[] | undefined
+  theme:   u.nullable( u.oneof( [ 'a', 'b' ] ) ),  // 'a' | 'b' | null
 } );
 ```
 
@@ -143,9 +143,9 @@ Restrict an argument to a fixed set:
 
 ```ts
 new UrlArgs( {
-	theme:    u.oneof( [ 'light', 'dark', 'auto' ] ),  // 'light' | 'dark' | 'auto'
-	fontSize: u.oneof( [ 12, 14, 16, 18 ] ),           // 12 | 14 | 16 | 18
-	mode:     u.oneof( [ 'a', 'b', 'c' ], 'b' ),       // default to 'b'
+  theme:    u.oneof( [ 'light', 'dark', 'auto' ] ),  // 'light' | 'dark' | 'auto'
+  fontSize: u.oneof( [ 12, 14, 16, 18 ] ),           // 12 | 14 | 16 | 18
+  mode:     u.oneof( [ 'a', 'b', 'c' ], 'b' ),       // default to 'b'
 } );
 ```
 
@@ -159,8 +159,8 @@ For arbitrary JSON values, use `u.json` with a default:
 type Config = { w: number; h: number; info: { on: boolean } };
 
 new UrlArgs( {
-	config: u.json<Config>( { w: 100, h: 100, info: { on: false } } ),
-	items:  u.json( [ 1, 2, 3 ] ),
+  config: u.json<Config>( { w: 100, h: 100, info: { on: false } } ),
+  items:  u.json( [ 1, 2, 3 ] ),
 } );
 
 // 🌐 ?config={"w":200,"h":300,"info":{"on":true}}&items=[4,5,6]
@@ -172,9 +172,9 @@ To validate the parsed shape at runtime, pass a predicate:
 
 ```ts
 const isConfig = ( v: unknown ): boolean =>
-	typeof v === 'object' && v !== null
-		&& typeof ( v as Config ).w === 'number'
-		&& typeof ( v as Config ).h === 'number';
+  typeof v === 'object' && v !== null
+    && typeof ( v as Config ).w === 'number'
+    && typeof ( v as Config ).h === 'number';
 
 u.json<Config>( defaultConfig, isConfig );
 ```
@@ -220,9 +220,9 @@ When no string is provided, `parse()` reads from `window.location.search` (or an
 
 ```ts
 new UrlArgs( defaults, {
-	search:    '?count=10',  // explicit query string
-	arrayMode: 'auto',       // 'auto' | 'comma' | 'repeated'
-	strict:    false,        // throw on invalid input instead of warning
+  search:    '?count=10',  // explicit query string
+  arrayMode: 'auto',       // 'auto' | 'comma' | 'repeated'
+  strict:    false,        // throw on invalid input instead of warning
 } );
 ```
 
@@ -232,9 +232,9 @@ Print a styled table of arguments and their values to the console:
 
 ```ts
 args.describe( {
-	count:   'The number of items to display',
-	enabled: 'Whether the items are enabled',
-	name:    'The name of the items',
+  count:   'The number of items to display',
+  enabled: 'Whether the items are enabled',
+  name:    'The name of the items',
 } );
 ```
 
