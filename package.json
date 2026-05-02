@@ -39,6 +39,7 @@
     "directory": "."
   },
   "devDependencies": {
+    "@stylistic/eslint-plugin": "^5.10.0",
     "concurrently": "^9.2.0",
     "eslint": "^9.27.0",
     "jsdom": "^24.0.0",

@@ -6,30 +6,30 @@ import { UrlArgs, u } from './src/index.js';
 import './examples.js';
 
 type MyJsonType = {
-	a: number;
-	b: number;
-	c: { d: boolean };
+  a: number;
+  b: number;
+  c: { d: boolean };
 };
 
 const args = new UrlArgs( {
-	myString: 'hello',
-	myNumber: 123,
-	myBoolean: true,
-	myEmptyStringArray: u.array( u.string() ),
-	myEmptyNumberArray: u.array( u.number() ),
-	myEmptyBooleanArray: u.array( u.boolean() ),
-	myStringArray: u.array( [ 'a', 'b' ] ),
-	myNumberArray: u.array( [ 1, 2, 3 ] ),
-	myBooleanArray: u.array( [ true, false ] ),
-	myOptional: u.optional( u.number() ),
-	myOptionalWithDefault: u.optional( u.number(), 123 ),
-	myNullable: u.nullable( u.string() ),
-	myNullableWithDefault: u.nullable( u.string(), 'test' ),
-	myOptionalArray: u.optional( u.array( u.number() ) ),
-	myOneofString: u.oneof( [ 'd', 'e', 'f' ] ),
-	myOneofNumber: u.oneof( [ 1, 2, 3 ] ),
-	myOneofWithDefault: u.oneof( [ 'a', 'b', 'c' ], 'b' ),
-	myJson: u.json<MyJsonType>( { a: 1, b: 2, c: { d: false } } ),
+  myString: 'hello',
+  myNumber: 123,
+  myBoolean: true,
+  myEmptyStringArray: u.array( u.string() ),
+  myEmptyNumberArray: u.array( u.number() ),
+  myEmptyBooleanArray: u.array( u.boolean() ),
+  myStringArray: u.array( [ 'a', 'b' ] ),
+  myNumberArray: u.array( [ 1, 2, 3 ] ),
+  myBooleanArray: u.array( [ true, false ] ),
+  myOptional: u.optional( u.number() ),
+  myOptionalWithDefault: u.optional( u.number(), 123 ),
+  myNullable: u.nullable( u.string() ),
+  myNullableWithDefault: u.nullable( u.string(), 'test' ),
+  myOptionalArray: u.optional( u.array( u.number() ) ),
+  myOneofString: u.oneof( [ 'd', 'e', 'f' ] ),
+  myOneofNumber: u.oneof( [ 1, 2, 3 ] ),
+  myOneofWithDefault: u.oneof( [ 'a', 'b', 'c' ], 'b' ),
+  myJson: u.json<MyJsonType>( { a: 1, b: 2, c: { d: false } } ),
 } );
 
 expectType<string>( args.values.myString );
