@@ -1,34 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { $allowed, $array, $json, $null, $undefined, UrlArgs } from './src/index.js';
+import { UrlArgs, u } from './src/index.js';
 
 describe( 'UrlArgs', () => {
-
-	// mock browser environment
-	// ---------------------------------------------------------------------------
 
 	let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
 	let consoleLogSpy: ReturnType<typeof vi.spyOn>;
 
 	beforeEach( () => {
-
-		// mock window.location.search
-		if ( typeof window === 'undefined' ) {
-			vi.stubGlobal( 'window', { location: { search: '' } } );
-		} else {
-			Object.defineProperty( window, 'location', {
-				value: { search: '' },
-				writable: true,
-			} );
-		}
-
-		// reset array mode
-		UrlArgs.arrayMode = UrlArgs.DEFAULT_ARRAY_MODE;
-
-		// spy on console.warn and console.log
 		consoleWarnSpy = vi.spyOn( console, 'warn' ).mockImplementation( () => {} );
 		consoleLogSpy = vi.spyOn( console, 'log' ).mockImplementation( () => {} );
-
 	} );
 
 	afterEach( () => {
@@ -39,18 +20,17 @@ describe( 'UrlArgs', () => {
 	// basic functionality
 	// ---------------------------------------------------------------------------
 
-	it( 'should return default values when no URL parameters exist', () => {
+	it( 'returns default values when no URL parameters exist', () => {
 		const defaults = { count: 10, enabled: true, name: 'test' };
-		const args = new UrlArgs( defaults );
+		const args = new UrlArgs( defaults, { search: '' } );
 		expect( args.values ).toEqual( defaults );
 	} );
 
-	it( 'should parse URL parameters and override defaults', () => {
-		window.location.search = '?count=20&enabled=false&name=urlargs';
-
-		const defaults = { count: 10, enabled: true, name: 'test' };
-		const args = new UrlArgs( defaults );
-
+	it( 'parses URL parameters and overrides defaults', () => {
+		const args = new UrlArgs(
+			{ count: 10, enabled: true, name: 'test' },
+			{ search: '?count=20&enabled=false&name=urlargs' }
+		);
 		expect( args.values ).toEqual( {
 			count: 20,
 			enabled: false,
@@ -58,23 +38,18 @@ describe( 'UrlArgs', () => {
 		} );
 	} );
 
-	// simple types
+	// shorthand types
 	// ---------------------------------------------------------------------------
 
-	it( 'should handle string type', () => {
-		window.location.search = '?foo=bar';
-		const args = new UrlArgs( { foo: 'default' } );
+	it( 'handles string shorthand', () => {
+		const args = new UrlArgs( { foo: 'default' }, { search: '?foo=bar' } );
 		expect( args.values.foo ).toBe( 'bar' );
 	} );
 
-	it( 'should handle boolean parameters', () => {
-		const defaults = { enabled: false };
-		let args: UrlArgs<typeof defaults>;
-
-		const test = ( str: string, expected: boolean ) => {
-			window.location.search = str;
-			args = new UrlArgs( defaults );
-			expect( args.values, str ).toEqual( { enabled: expected } );
+	it( 'handles boolean parameters', () => {
+		const test = ( search: string, expected: boolean ) => {
+			const args = new UrlArgs( { enabled: false }, { search } );
+			expect( args.values.enabled, search ).toBe( expected );
 		};
 
 		test( '?enabled', true );
@@ -86,273 +61,454 @@ describe( 'UrlArgs', () => {
 		test( '?enabled=false', false );
 		test( '?enabled=FALSE', false );
 		test( '?enabled=0', false );
+	} );
 
-		// test invalid boolean value, should use default
-		window.location.search = '?enabled=anythingElse';
-		args = new UrlArgs( { enabled: false } );
-		expect( args.values.enabled ).toBe( false );
-		args = new UrlArgs( { enabled: true } );
-		expect( args.values.enabled ).toBe( true );
+	it( 'falls back to default for invalid boolean', () => {
+		const args1 = new UrlArgs( { enabled: false }, { search: '?enabled=anythingElse' } );
+		expect( args1.values.enabled ).toBe( false );
+		const args2 = new UrlArgs( { enabled: true }, { search: '?enabled=anythingElse' } );
+		expect( args2.values.enabled ).toBe( true );
 		expect( consoleWarnSpy ).toHaveBeenCalled();
 	} );
 
-	it( 'should handle invalid number parameters', () => {
-		window.location.search = '?count=notanumber';
-		const args = new UrlArgs( { count: 123 } );
+	it( 'falls back to default for invalid number', () => {
+		const args = new UrlArgs( { count: 123 }, { search: '?count=notanumber' } );
 		expect( args.values.count ).toBe( 123 );
 		expect( consoleWarnSpy ).toHaveBeenCalled();
 	} );
 
-	// array types
+	// arrays
 	// ---------------------------------------------------------------------------
 
-	it( 'should handle array parameters', () => {
-		window.location.search = '?tags=javascript&tags=typescript';
-
-		const defaults = { tags: [] };
-		const args = new UrlArgs( defaults );
-
-		expect( args.values ).toEqual( {
-			tags: [ 'javascript', 'typescript' ]
-		} );
+	it( 'handles repeated array parameters in auto mode', () => {
+		const args = new UrlArgs(
+			{ tags: u.array( u.string() ) },
+			{ search: '?tags=javascript&tags=typescript' }
+		);
+		expect( args.values.tags ).toEqual( [ 'javascript', 'typescript' ] );
 	} );
 
-	it( 'should handle array number type', () => {
-		window.location.search = '?foo=1&foo=2&foo=3';
-		const args = new UrlArgs( { foo: $array.number } );
+	it( 'handles comma-separated arrays in auto mode', () => {
+		const args = new UrlArgs(
+			{ tags: u.array( u.string() ) },
+			{ search: '?tags=a,b,c' }
+		);
+		expect( args.values.tags ).toEqual( [ 'a', 'b', 'c' ] );
+	} );
+
+	it( 'combines repeated and comma in auto mode', () => {
+		const args = new UrlArgs(
+			{ tags: u.array( u.string() ) },
+			{ search: '?tags=a,b&tags=c,d' }
+		);
+		expect( args.values.tags ).toEqual( [ 'a', 'b', 'c', 'd' ] );
+	} );
+
+	it( 'parses number arrays', () => {
+		const args = new UrlArgs(
+			{ foo: u.array( u.number() ) },
+			{ search: '?foo=1,2,3' }
+		);
 		expect( args.values.foo ).toEqual( [ 1, 2, 3 ] );
 	} );
 
-	it( 'should handle array number with default value', () => {
-		const args = new UrlArgs( { foo: $array.number( [ 1, 2, 3 ] ) } );
-		expect( args.values.foo ).toEqual( [ 1, 2, 3 ] );
+	it( 'parses boolean arrays', () => {
+		const args = new UrlArgs(
+			{ foo: u.array( u.boolean() ) },
+			{ search: '?foo=true,false,true' }
+		);
+		expect( args.values.foo ).toEqual( [ true, false, true ] );
 	} );
 
-	it( 'should handle array number type with malformed input', () => {
-		window.location.search = '?foo=1&foo=2&foo=3&foo=notanumber';
-		const args = new UrlArgs( { foo: $array.number( [ 2, 3, 4 ] ) } );
+	it( 'falls back to array default on invalid element', () => {
+		const args = new UrlArgs(
+			{ foo: u.array( [ 2, 3, 4 ] ) },
+			{ search: '?foo=1,2,3,notanumber' }
+		);
 		expect( args.values.foo ).toEqual( [ 2, 3, 4 ] );
 		expect( consoleWarnSpy ).toHaveBeenCalled();
 	} );
 
-	it( 'should handle array boolean type', () => {
-		window.location.search = '?foo=true&foo=false&foo=true';
-		const args = new UrlArgs( { foo: $array.boolean } );
-		expect( args.values.foo ).toEqual( [ true, false, true ] );
-	} );
-
-	it( 'should handle array boolean with default value', () => {
-		const args = new UrlArgs( { foo: $array.boolean( [ true, false, true ] ) } );
-		expect( args.values.foo ).toEqual( [ true, false, true ] );
-	} );
-
-	// $json type
-	// ---------------------------------------------------------------------------
-
-	it( 'should handle json type', () => {
-		window.location.search = '?foo={"a":1,"b":2,"c":{"d":true}}';
-		type Type = {
-			a: number;
-			b: number;
-			c: {
-				d: boolean;
-			};
-		};
-		const def = { a: 1, b: 2, c: { d: false } };
-		const args = new UrlArgs( { foo: $json<Type>( def ) } );
-		expect( args.values.foo ).toEqual( { a: 1, b: 2, c: { d: true } } );
-	} );
-
-	it( 'should fall back to default json value if no value is provided', () => {
-		type Type = {
-			a: number;
-			b: number;
-			c: {
-				d: boolean;
-			};
-		};
-		const def = { a: 1, b: 2, c: { d: false } };
-		const args = new UrlArgs( { foo: $json<Type>( def ) } );
-		expect( args.values.foo ).toEqual( { a: 1, b: 2, c: { d: false } } );
-	} );
-
-	it( 'should handle json arrays', () => {
-		window.location.search = '?foo=[4,5,6]';
-		const args = new UrlArgs( { foo: $json( [ 1, 2, 3 ] ) } );
-		expect( args.values.foo ).toEqual( [ 4, 5, 6 ] );
-	} );
-
-	// comma array mode
-	// ---------------------------------------------------------------------------
-
-	it( 'should handle comma array mode', () => {
-		UrlArgs.arrayMode = 'comma';
-		window.location.search = '?foo=a,b,c';
-		let args = new UrlArgs( { foo: [] } );
-		expect( args.values.foo ).toEqual( [ 'a', 'b', 'c' ] );
-	} );
-
-	it( 'should handle comma array mode with number array', () => {
-		UrlArgs.arrayMode = 'comma';
-		window.location.search = '?foo=1,2,3';
-		let args = new UrlArgs( { foo: $array.number } );
+	it( 'returns array default when URL is missing', () => {
+		const args = new UrlArgs(
+			{ foo: u.array( [ 1, 2, 3 ] ) },
+			{ search: '' }
+		);
 		expect( args.values.foo ).toEqual( [ 1, 2, 3 ] );
 	} );
 
-	it( 'should handle comma array mode with escaped commas', () => {
-		UrlArgs.arrayMode = 'comma';
+	// arrayMode
+	// ---------------------------------------------------------------------------
 
-		window.location.search = '?foo=a,b\\,c';
-		let args = new UrlArgs( { foo: [] } );
-		expect( args.values.foo ).toEqual( [ 'a', 'b,c' ] );
-
-		window.location.search = '?foo=a,b\\\\,c';
-		args = new UrlArgs( { foo: [] } );
-		expect( args.values.foo, ).toEqual( [ 'a', 'b\\\\', 'c' ] );
+	it( 'arrayMode: repeated only collects repeated occurrences', () => {
+		const args = new UrlArgs(
+			{ tags: u.array( u.string() ) },
+			{ search: '?tags=a,b,c', arrayMode: 'repeated' }
+		);
+		expect( args.values.tags ).toEqual( [ 'a,b,c' ] );
 	} );
 
-	it( 'should handle comma array mode with whitespace', () => {
-		UrlArgs.arrayMode = 'comma';
-		window.location.search = '?foo=  a,b, c';
-		let args = new UrlArgs( { foo: [] } );
-		expect( args.values.foo ).toEqual( [ 'a', 'b', 'c' ] );
+	it( 'arrayMode: comma splits commas', () => {
+		const args = new UrlArgs(
+			{ tags: u.array( u.string() ) },
+			{ search: '?tags=a,b,c', arrayMode: 'comma' }
+		);
+		expect( args.values.tags ).toEqual( [ 'a', 'b', 'c' ] );
 	} );
 
-	it( 'should handle comma array mode with trailing backslash', () => {
-		UrlArgs.arrayMode = 'comma';
-		window.location.search = '?foo=a,b\\';
-		let args = new UrlArgs( { foo: [] } );
-		expect( args.values.foo ).toEqual( [ 'a', 'b\\' ] );
-	} );
-
-	it( 'should assume repeated mode, even if comma mode is set', () => {
-		UrlArgs.arrayMode = 'comma';
-		window.location.search = '?foo=a&foo=b&foo=c';
-		let args = new UrlArgs( { foo: [] } );
-		expect( args.values.foo ).toEqual( [ 'a', 'b', 'c' ] );
+	it( 'arrayMode: comma falls back and warns when key is repeated', () => {
+		const args = new UrlArgs(
+			{ tags: u.array( u.string() ) },
+			{ search: '?tags=a&tags=b', arrayMode: 'comma' }
+		);
+		expect( args.values.tags ).toEqual( [ 'a', 'b' ] );
 		expect( consoleWarnSpy ).toHaveBeenCalled();
 	} );
 
-	// $undefined and $null
+	it( 'comma mode handles escaped commas', () => {
+		const args = new UrlArgs(
+			{ tags: u.array( u.string() ) },
+			{ search: '?tags=a,b\\,c', arrayMode: 'comma' }
+		);
+		expect( args.values.tags ).toEqual( [ 'a', 'b,c' ] );
+	} );
+
+	it( 'comma mode preserves escaped backslashes', () => {
+		const args = new UrlArgs(
+			{ tags: u.array( u.string() ) },
+			{ search: '?tags=a,b\\\\,c', arrayMode: 'comma' }
+		);
+		expect( args.values.tags ).toEqual( [ 'a', 'b\\\\', 'c' ] );
+	} );
+
+	it( 'comma mode trims whitespace', () => {
+		const args = new UrlArgs(
+			{ tags: u.array( u.string() ) },
+			{ search: '?tags=  a,b, c', arrayMode: 'comma' }
+		);
+		expect( args.values.tags ).toEqual( [ 'a', 'b', 'c' ] );
+	} );
+
+	// optional / nullable
 	// ---------------------------------------------------------------------------
 
-	it( 'should handle undefined type', () => {
-		window.location.search = '?foo=2';
-		const args1 = new UrlArgs( {
-			foo: $undefined.number,
-			bar: $undefined.number,
-		} );
+	it( 'handles u.optional', () => {
+		const args1 = new UrlArgs(
+			{ foo: u.optional( u.number() ), bar: u.optional( u.number() ) },
+			{ search: '?foo=2' }
+		);
 		expect( args1.values.foo ).toBe( 2 );
 		expect( args1.values.bar ).toBe( undefined );
-		window.location.search = '';
-		const args2 = new UrlArgs( {
-			foo: $undefined.number
-		} );
+
+		const args2 = new UrlArgs(
+			{ foo: u.optional( u.number() ) },
+			{ search: '' }
+		);
 		expect( args2.values.foo ).toBe( undefined );
 	} );
 
-	it( 'should handle nullish with default value', () => {
-		window.location.search = '';
-		const args = new UrlArgs( {
-			foo: $null.string( 'test' ),
-			bar: $undefined.number( 42 ),
-			baz: $null.number,
-		} );
-		expect( args.values.foo ).toBe( 'test' );
-		expect( args.values.bar ).toBe( 42 );
-		expect( args.values.baz ).toBe( null );
+	it( 'u.optional accepts a non-nullish default', () => {
+		const args = new UrlArgs(
+			{ count: u.optional( u.number(), 42 ) },
+			{ search: '' }
+		);
+		expect( args.values.count ).toBe( 42 );
 	} );
 
-	it( 'should use nullish default value on invalid input', () => {
-		window.location.search = '?count=notanumber';
-		const args = new UrlArgs( { count: $null.number( 100 ) } );
+	it( 'u.nullable accepts a non-nullish default', () => {
+		const args = new UrlArgs(
+			{ name: u.nullable( u.string(), 'test' ) },
+			{ search: '' }
+		);
+		expect( args.values.name ).toBe( 'test' );
+	} );
+
+	it( 'parses "undefined" sentinel', () => {
+		const args = new UrlArgs(
+			{ count: u.optional( u.number(), 100 ) },
+			{ search: '?count=undefined' }
+		);
+		expect( args.values.count ).toBe( undefined );
+	} );
+
+	it( 'parses "null" sentinel', () => {
+		const args = new UrlArgs(
+			{ count: u.nullable( u.number(), 100 ) },
+			{ search: '?count=null' }
+		);
+		expect( args.values.count ).toBe( null );
+	} );
+
+	it( 'falls back to nullish default on invalid input', () => {
+		const args = new UrlArgs(
+			{ count: u.nullable( u.number(), 100 ) },
+			{ search: '?count=notanumber' }
+		);
 		expect( args.values.count ).toBe( 100 );
 		expect( consoleWarnSpy ).toHaveBeenCalled();
 	} );
 
-	it( 'should set nullish value via url', () => {
-		window.location.search = '?count=null';
-		let args = new UrlArgs( { count: $null.number( 100 ) } );
-		expect( args.values.count ).toBe( null );
-		window.location.search = '?count=undefined';
-		args = new UrlArgs( { count: $null.number( 100 ) } );
-		expect( args.values.count ).toBe( undefined );
+	it( 'allows optional arrays', () => {
+		const args1 = new UrlArgs(
+			{ tags: u.optional( u.array( u.string() ) ) },
+			{ search: '?tags=a,b,c' }
+		);
+		expect( args1.values.tags ).toEqual( [ 'a', 'b', 'c' ] );
+
+		const args2 = new UrlArgs(
+			{ tags: u.optional( u.array( u.string() ) ) },
+			{ search: '?tags=undefined' }
+		);
+		expect( args2.values.tags ).toBe( undefined );
+
+		const args3 = new UrlArgs(
+			{ tags: u.optional( u.array( u.string() ) ) },
+			{ search: '' }
+		);
+		expect( args3.values.tags ).toBe( undefined );
 	} );
 
-	// $allowed
+	// oneof
 	// ---------------------------------------------------------------------------
 
-	it( 'should handle the allowed type', () => {
-		let args = new UrlArgs( { foo: $allowed.string( 'a', 'b', 'c' ) } );
-		expect( args.values.foo ).toEqual( 'a' );
-		window.location.search = '?foo=d';
-		args = new UrlArgs( { foo: $allowed.string( 'a', 'b', 'c' ) } );
-		expect( args.values.foo ).toEqual( 'a' );
+	it( 'handles u.oneof with strings', () => {
+		const args = new UrlArgs(
+			{ theme: u.oneof( [ 'light', 'dark', 'auto' ] ) },
+			{ search: '' }
+		);
+		expect( args.values.theme ).toBe( 'light' );
 	} );
 
-	it( 'should warn on invalid allowed type', () => {
-		window.location.search = '?foo=d';
-		new UrlArgs( { foo: $allowed.string( 'a', 'b', 'c' ) } );
+	it( 'u.oneof accepts an explicit default', () => {
+		const args = new UrlArgs(
+			{ theme: u.oneof( [ 'light', 'dark', 'auto' ], 'auto' ) },
+			{ search: '' }
+		);
+		expect( args.values.theme ).toBe( 'auto' );
+	} );
+
+	it( 'u.oneof parses URL value', () => {
+		const args = new UrlArgs(
+			{ theme: u.oneof( [ 'light', 'dark', 'auto' ] ) },
+			{ search: '?theme=dark' }
+		);
+		expect( args.values.theme ).toBe( 'dark' );
+	} );
+
+	it( 'u.oneof with numbers', () => {
+		const args = new UrlArgs(
+			{ size: u.oneof( [ 12, 14, 16 ] ) },
+			{ search: '?size=14' }
+		);
+		expect( args.values.size ).toBe( 14 );
+	} );
+
+	it( 'u.oneof warns and falls back for invalid value', () => {
+		const args = new UrlArgs(
+			{ theme: u.oneof( [ 'light', 'dark' ] ) },
+			{ search: '?theme=neon' }
+		);
+		expect( args.values.theme ).toBe( 'light' );
 		expect( consoleWarnSpy ).toHaveBeenCalled();
+	} );
+
+	// u.array shorthand
+	// ---------------------------------------------------------------------------
+
+	it( 'u.array infers element type from string default', () => {
+		const args = new UrlArgs(
+			{ tags: u.array( [ 'a', 'b' ] ) },
+			{ search: '?tags=x,y,z' }
+		);
+		expect( args.values.tags ).toEqual( [ 'x', 'y', 'z' ] );
+	} );
+
+	it( 'u.array infers element type from number default', () => {
+		const args = new UrlArgs(
+			{ nums: u.array( [ 1, 2, 3 ] ) },
+			{ search: '?nums=4,5,6' }
+		);
+		expect( args.values.nums ).toEqual( [ 4, 5, 6 ] );
+	} );
+
+	it( 'u.array infers element type from boolean default', () => {
+		const args = new UrlArgs(
+			{ flags: u.array( [ true, false ] ) },
+			{ search: '?flags=false,true' }
+		);
+		expect( args.values.flags ).toEqual( [ false, true ] );
+	} );
+
+	it( 'u.array shorthand uses the array as default when URL is missing', () => {
+		const args = new UrlArgs(
+			{ tags: u.array( [ 'a', 'b' ] ) },
+			{ search: '' }
+		);
+		expect( args.values.tags ).toEqual( [ 'a', 'b' ] );
+	} );
+
+	// json
+	// ---------------------------------------------------------------------------
+
+	it( 'parses u.json values', () => {
+		type Config = { a: number; b: number; c: { d: boolean } };
+		const def: Config = { a: 1, b: 2, c: { d: false } };
+		const args = new UrlArgs(
+			{ config: u.json<Config>( def ) },
+			{ search: '?config={"a":1,"b":2,"c":{"d":true}}' }
+		);
+		expect( args.values.config ).toEqual( { a: 1, b: 2, c: { d: true } } );
+	} );
+
+	it( 'falls back to JSON default when URL is missing', () => {
+		type Config = { a: number };
+		const def: Config = { a: 1 };
+		const args = new UrlArgs(
+			{ config: u.json<Config>( def ) },
+			{ search: '' }
+		);
+		expect( args.values.config ).toBe( def );
+	} );
+
+	it( 'handles JSON arrays', () => {
+		const args = new UrlArgs(
+			{ items: u.json( [ 1, 2, 3 ] ) },
+			{ search: '?items=[4,5,6]' }
+		);
+		expect( args.values.items ).toEqual( [ 4, 5, 6 ] );
+	} );
+
+	it( 'JSON validator rejects mismatched shape', () => {
+		type Config = { w: number; h: number };
+		const isConfig = ( v: unknown ): boolean =>
+			typeof v === 'object' && v !== null
+				&& typeof ( v as Config ).w === 'number'
+				&& typeof ( v as Config ).h === 'number';
+		const def: Config = { w: 100, h: 100 };
+		const args = new UrlArgs(
+			{ config: u.json<Config>( def, isConfig ) },
+			{ search: '?config={"x":1}' }
+		);
+		expect( args.values.config ).toBe( def );
+		expect( consoleWarnSpy ).toHaveBeenCalled();
+	} );
+
+	// reparse
+	// ---------------------------------------------------------------------------
+
+	it( 'parse() re-reads values from a new query string', () => {
+		const args = new UrlArgs( { count: 10 }, { search: '?count=1' } );
+		expect( args.values.count ).toBe( 1 );
+		args.parse( '?count=42' );
+		expect( args.values.count ).toBe( 42 );
+		args.parse( '' );
+		expect( args.values.count ).toBe( 10 );
+	} );
+
+	// strict mode
+	// ---------------------------------------------------------------------------
+
+	it( 'strict mode throws on invalid input', () => {
+		expect( () => new UrlArgs(
+			{ count: 10 },
+			{ search: '?count=notanumber', strict: true }
+		) ).toThrow();
+	} );
+
+	it( 'strict mode does not throw when URL is missing', () => {
+		const args = new UrlArgs(
+			{ count: 10 },
+			{ search: '', strict: true }
+		);
+		expect( args.values.count ).toBe( 10 );
+	} );
+
+	// freezing
+	// ---------------------------------------------------------------------------
+
+	it( 'freezes values at the top level', () => {
+		const args = new UrlArgs( { count: 10 }, { search: '' } );
+		expect( () => {
+			( args.values as { count: number } ).count = 999;
+		} ).toThrow();
+	} );
+
+	it( 'freezes array values', () => {
+		const args = new UrlArgs(
+			{ tags: u.array( [ 'a' ] ) },
+			{ search: '' }
+		);
+		expect( () => {
+			( args.values.tags as string[] ).push( 'x' );
+		} ).toThrow();
 	} );
 
 	// error handling
 	// ---------------------------------------------------------------------------
 
-	it( 'should throw on unsupported type', () => {
-		// @ts-expect-error - should throw on unsupported type
+	it( 'throws on unsupported defaults', () => {
+		// @ts-expect-error
 		expect( () => new UrlArgs( { foo: {} } ) ).toThrow();
-		// @ts-expect-error - should throw on unsupported type
+		// @ts-expect-error
 		expect( () => new UrlArgs( { foo: Symbol( 'foo' ) } ) ).toThrow();
-		// @ts-expect-error - should throw on unsupported type
+		// @ts-expect-error
 		expect( () => new UrlArgs( { foo: null } ) ).toThrow();
-		// @ts-expect-error - should throw on unsupported type
+		// @ts-expect-error
 		expect( () => new UrlArgs( { foo: undefined } ) ).toThrow();
-		// @ts-expect-error - should throw on unsupported type
+		// @ts-expect-error
 		expect( () => new UrlArgs( { foo: () => {} } ) ).toThrow();
+		// @ts-expect-error
+		expect( () => new UrlArgs( { foo: [] } ) ).toThrow();
 	} );
 
 	// describe()
 	// ---------------------------------------------------------------------------
 
-	it( 'should describe URL arguments', () => {
-		const defaults = {
+	it( 'describe() logs the requested keys', () => {
+		const args = new UrlArgs( {
 			count: 10,
 			enabled: true,
 			name: 'test',
-			undefinedNumber: $undefined.number,
-			nullString: $null.string,
-			arrayNumber: $array.number,
-			arrayBoolean: $array.boolean,
-			arrayString: $array.string,
-		};
-		const args = new UrlArgs( defaults );
+			tags: u.array( u.string() ),
+			optional: u.optional( u.number() ),
+			theme: u.oneof( [ 'light', 'dark' ] ),
+		}, { search: '?count=20' } );
 
-		const descriptions = {
-			count: 'The number of items to display',
-			enabled: 'Whether the items are enabled',
-			name: 'The name of the items',
-			undefinedNumber: '$undefined.number test',
-			nullString: '$null.string test',
-			arrayNumber: '$array.number test',
-			arrayBoolean: '$array.boolean test',
-			arrayString: '$array.string test',
-		};
-
-		args.describe( descriptions );
+		args.describe( {
+			count: 'The number of items',
+			enabled: 'Whether items are enabled',
+			theme: 'Color theme',
+		} );
 
 		expect( consoleLogSpy ).toHaveBeenCalled();
 	} );
 
-	it( 'should log the allowed types when describing', () => {
-		let logs: string[] = [];
+	it( 'describe() shows oneof values in the type label', () => {
+		const logs: string[] = [];
 		consoleLogSpy.mockImplementation( ( ...args ) => {
 			logs.push( args.join( ' ' ) );
 		} );
-		const allowed = [ 'ONE', 'TWO', 'THREE' ];
-		new UrlArgs( { foo: $allowed.string( ...allowed ) } ).describe( { foo: 'The foo parameter' } );
-		expect( consoleLogSpy ).toHaveBeenCalled();
-		expect( logs.some( log => allowed.every( a => log.includes( a ) ) ) ).toBe( true );
+		const options = [ 'ONE', 'TWO', 'THREE' ];
+		new UrlArgs(
+			{ foo: u.oneof( options ) },
+			{ search: '' }
+		).describe( { foo: 'The foo parameter' } );
+		expect( logs.some( log => options.every( a => log.includes( a ) ) ) ).toBe( true );
+	} );
+
+	it( 'describeAll() logs every key', () => {
+		const logs: string[] = [];
+		consoleLogSpy.mockImplementation( ( ...args ) => {
+			logs.push( args.join( ' ' ) );
+		} );
+		new UrlArgs( {
+			alpha: 1,
+			beta: 'x',
+			gamma: false,
+		}, { search: '' } ).describeAll();
+		expect( logs.some( log => log.includes( 'alpha' ) ) ).toBe( true );
+		expect( logs.some( log => log.includes( 'beta' ) ) ).toBe( true );
+		expect( logs.some( log => log.includes( 'gamma' ) ) ).toBe( true );
 	} );
 
 } );

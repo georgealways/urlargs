@@ -23,22 +23,22 @@
 
 	<!-- Long -->
 	<p>
-		Long: <a href="?count=20&enabled=false&name=urlargs&tags=b&tags=c">
-			/?count=20&enabled=false&name=urlargs&tags=b&tags=c
+		Long: <a href="?count=20&enabled=false&name=urlargs&tags=b,c">
+			/?count=20&enabled=false&name=urlargs&tags=b,c
 		</a>
 	</p>
 
 	<!-- Allowed -->
 	<p>
-		Allowed: <a href="?theme=dark&size=medium&count=50">
-			/?theme=dark&size=medium&count=50
+		Allowed: <a href="?theme=dark&size=medium&priority=3">
+			/?theme=dark&size=medium&priority=3
 		</a>
 	</p>
 
 	<!-- Overriding Nullish -->
 	<p>
-		Overriding Nullish: <a href="?undefNum=undefined">
-			/?undefNum=undefined
+		Overriding Nullish: <a href="?optionalNum=undefined">
+			/?optionalNum=undefined
 		</a>
 	</p>
 
@@ -47,37 +47,46 @@
 	<p>Click the links to change the URL arguments. Open your console to see argument descriptions.</p>
 
 	<script type="module">
-			import { UrlArgs, $undefined, $null, $array, $allowed } from './src/index.ts';
+			import { UrlArgs, u } from './src/index.ts';
 
 			const defaults = {
-				count: 10,
-				enabled: true,
-				name: 'test',
-				tags: [ 'a', 'b' ],
-				undefNum: $undefined.number( 100 ),
-				nullStr: $null.string,
-				arrayNum: $array.number,
-				arrayBool: $array.boolean,
-				arrayStr: $array.string,
-				theme: $allowed.string( 'light', 'dark', 'auto' ),
-				size: $allowed.string( 'small', 'medium', 'large' ),
-				priority: $allowed.number( 1, 2, 3, 4, 5 ),
+				count:         10,
+				enabled:       true,
+				name:          'test',
+
+				tagsWithDefault:    u.array( [ 'a', 'b' ] ),
+				numbersWithDefault: u.array( [ 1, 2, 3 ] ),
+				flagsWithDefault:   u.array( [ true, false ] ),
+
+				emptyStringArray:   u.array( u.string() ),
+				emptyNumberArray:   u.array( u.number() ),
+				emptyBooleanArray:  u.array( u.boolean() ),
+
+				optionalNum:   u.optional( u.number(), 100 ),
+				nullableStr:   u.nullable( u.string() ),
+
+				theme:         u.oneof( [ 'light', 'dark', 'auto' ] ),
+				size:          u.oneof( [ 'small', 'medium', 'large' ] ),
+				priority:      u.oneof( [ 1, 2, 3, 4, 5 ] ),
 			};
 
 			const args = new UrlArgs( defaults );
 
 			args.describeAll( {
-				count: 'The number of items to display',
-				enabled: 'Whether the items are enabled',
-				name: 'The name of the items',
-				undefNum: 'Use $undefined.number to allow undefined values',
-				nullStr: 'Use $null.string to allow null values',
-				arrayNum: 'Use $array.number to allow array of numbers',
-				arrayBool: 'Use $array.boolean to allow array of booleans',
-				arrayStr: '$array.string is included for consistency, but not necessary',
-				theme: 'Use $allowed.string to restrict values to a specific set',
-				size: 'Size of the component',
-				priority: 'Use $allowed.number to restrict numbers to specific values',
+				count:              'A plain number with a default',
+				enabled:            'A plain boolean with a default',
+				name:               'A plain string with a default',
+				tagsWithDefault:    'String array, type inferred from default',
+				numbersWithDefault: 'Number array, type inferred from default',
+				flagsWithDefault:   'Boolean array, type inferred from default',
+				emptyStringArray:   'Empty string array, explicit element type',
+				emptyNumberArray:   'Empty number array, explicit element type',
+				emptyBooleanArray:  'Empty boolean array, explicit element type',
+				optionalNum:        'Number that can be undefined',
+				nullableStr:        'String that can be null',
+				theme:              'One of these specific strings',
+				size:               'One of these specific strings',
+				priority:           'One of these specific numbers',
 			} );
 
 			window.args = args;

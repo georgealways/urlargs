@@ -1,35 +1,40 @@
-import type { AllowedArg, ArrayArg, JsonArg, NullishArg } from './special.js';
+export type AllowedPrimitive = string | number | boolean;
 
-type ResolveNullishArg<T> =
-	T extends NullishArg<infer U, any> & { defaultValue: infer D }
-		? U | ( undefined extends D ? undefined : null )
-		: never;
+export interface ScalarSpec<T> {
+	readonly kind: 'scalar';
+	readonly parse: ( raw: string ) => T;
+	readonly validate: ( raw: string ) => boolean;
+	readonly defaultValue: T;
+	readonly typeLabel: string;
+}
 
-type ResolveAllowedArg<T> =
-	T extends AllowedArg<any, infer A>
-		? ( A extends readonly ( infer L )[] ? L : never )
-		: never;
+export interface ArraySpec<T> {
+	readonly kind: 'array';
+	readonly parse: ( raw: string[] ) => T;
+	readonly validate: ( raw: string[] ) => boolean;
+	readonly defaultValue: T;
+	readonly typeLabel: string;
+}
 
-type ResolveArgType<T> =
-	T extends NullishArg<any, any> ? ResolveNullishArg<T>
-		: T extends ArrayArg<infer A> ? A[]
-			: T extends AllowedArg<any, any> ? ResolveAllowedArg<T>
-				: T extends JsonArg<infer J> ? J
-					: T extends boolean ? boolean
-						: T;
+export type Spec<T> = ScalarSpec<T> | ArraySpec<T>;
 
-export type ResolveSpecial<T> = {
-	[K in keyof T]: ResolveArgType<T[K]>
+export type Default = AllowedPrimitive | Spec<unknown>;
+
+export type ResolveDefault<D> =
+	D extends Spec<infer T> ? T :
+		D extends boolean ? boolean :
+			D extends number ? number :
+				D extends string ? string :
+					never;
+
+export type ResolveDefaults<T extends Record<string, Default>> = {
+	[K in keyof T]: ResolveDefault<T[K]>;
 };
 
-export type AllowedPrimitives = string | number | boolean;
+export type ArrayMode = 'auto' | 'comma' | 'repeated';
 
-export type DefaultValue =
-	| AllowedPrimitives
-	| NullishArg<AllowedPrimitives, undefined | null>
-	| ArrayArg<AllowedPrimitives>
-	| AllowedArg<AllowedPrimitives, readonly AllowedPrimitives[]>
-	| JsonArg<any>
-	| string[];
-
-export type ArrayMode = 'repeated' | 'comma';
+export interface UrlArgsOptions {
+	search?: string;
+	arrayMode?: ArrayMode;
+	strict?: boolean;
+}

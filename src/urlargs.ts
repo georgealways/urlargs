@@ -1,7 +1,7 @@
-import type { ArrayMode, DefaultValue, ResolveSpecial } from './types.js';
+import type { ArrayMode, Default, ResolveDefaults, Spec, UrlArgsOptions } from './types.js';
 
-import { isArray, isSpecial } from './special.js';
-import { arraysEqual, isTrue, stringify, truncate, validateBoolean, validateNumber } from './utils.js';
+import { isSpec, u } from './spec.js';
+import { arraysEqual, defaultSearch, splitComma, stringify, truncate } from './utils.js';
 
 /**
  * Parses URL query parameters into a typed object.
@@ -10,235 +10,166 @@ import { arraysEqual, isTrue, stringify, truncate, validateBoolean, validateNumb
  * const { count, enabled, name } = args.values;
  * ```
  */
-export class UrlArgs<T extends Record<string, DefaultValue>> {
+export class UrlArgs<T extends Record<string, Default>> {
 
-	private readonly urlSearchParams: URLSearchParams;
 	private readonly defaults: T;
+	private readonly specs: Record<keyof T, Spec<unknown>>;
+	private readonly arrayMode: ArrayMode;
+	private readonly strict: boolean;
 
-	readonly values: Readonly<ResolveSpecial<T>>;
+	private _values!: Readonly<ResolveDefaults<T>>;
 
-	static readonly DEFAULT_ARRAY_MODE: ArrayMode = 'repeated';
-	static arrayMode: ArrayMode = UrlArgs.DEFAULT_ARRAY_MODE;
+	get values(): Readonly<ResolveDefaults<T>> {
+		return this._values;
+	}
 
-	constructor( defaults: T, search = window.location.search ) {
-		this.validateDefaults( defaults );
+	constructor( defaults: T, options: UrlArgsOptions = {} ) {
 		this.defaults = defaults;
-		this.urlSearchParams = new URLSearchParams( search );
-		this.values = this.getValues();
+		this.arrayMode = options.arrayMode ?? 'auto';
+		this.strict = options.strict ?? false;
+		this.specs = this.toSpecs( defaults );
+		this.parse( options.search );
 	}
 
-	private validateDefaults( defaults: T ) {
-		for ( const [ key, arg ] of Object.entries( defaults ) ) {
-			if ( isSpecial( arg ) ) continue;
-			if ( arg === undefined ) {
-				throw new Error( 'Use $undefined to allow undefined values' );
-			}
-			if ( arg === null ) {
-				throw new Error( 'Use $null to allow null values' );
-			}
-			if ( Array.isArray( arg ) && !arg.every( v => typeof v === 'string' ) ) {
-				throw new Error( 'Use $array for non string[] arrays.' );
-			}
-			const type = typeof arg;
-			if ( ![ 'boolean', 'number', 'string' ].includes( type ) && !Array.isArray( arg ) ) {
-				throw new Error( `Unsupported type for ${key}: ${type}` );
-			}
+	/**
+	 * Re-parse values from a query string. Defaults to `window.location.search`.
+	 * Useful for testing and for SPAs that respond to URL changes.
+	 */
+	parse( search: string = defaultSearch() ): void {
+		const params = new URLSearchParams( search );
+		const values = {} as Record<keyof T, unknown>;
+		for ( const key of Object.keys( this.specs ) as ( keyof T )[] ) {
+			values[ key ] = this.resolveValue( params, key as string, this.specs[ key ] );
 		}
+		this.shallowFreeze( values );
+		this._values = values as Readonly<ResolveDefaults<T>>;
 	}
 
-	private getValues() {
-
-		const values = {} as ResolveSpecial<T>;
-
-		for ( const [ key, arg ] of Object.entries( this.defaults ) ) {
-
-			if ( !this.urlSearchParams.has( key ) ) {
-				const val = isSpecial( arg ) ? arg.defaultValue : arg;
-				values[ key as keyof T ] = val as ResolveSpecial<T>[keyof T];
-				continue;
-			}
-
-			const stringValue = this.urlSearchParams.get( key )!;
-			const arrayValue = this.parseArray( key );
-
-			const assign = (
-				parsedValue: any,
-				validator = ( _: string ) => true,
-				defaultValue: any = arg
-			) => {
-				if ( validator( stringValue ) ) {
-					values[ key as keyof T ] = parsedValue;
-					return;
-				}
-				console.warn( `Invalid URL argument for ${key}: "${stringValue}"` );
-				console.warn( `Using default value: ${stringify( defaultValue )}` );
-				values[ key as keyof T ] = defaultValue;
-			};
-
-			if ( isArray( arg ) ) {
-
-				assign( arrayValue.map( arg.parse ), () => arrayValue.every( arg.validate ), arg.defaultValue );
-
-			} else if ( isSpecial( arg ) ) {
-
-				assign( arg.parse( stringValue ), arg.validate, arg.defaultValue );
-
-			} else if ( typeof arg === 'boolean' ) {
-
-				assign( isTrue( stringValue ), validateBoolean );
-
-			} else if ( typeof arg === 'number' ) {
-
-				assign( Number( stringValue ), validateNumber );
-
-			} else if ( typeof arg === 'string' ) {
-
-				assign( stringValue );
-
-			} else if ( Array.isArray( arg ) ) {
-
-				assign( arrayValue );
-
-			}
-
+	private toSpecs( defaults: T ): Record<keyof T, Spec<unknown>> {
+		const specs = {} as Record<keyof T, Spec<unknown>>;
+		for ( const [ key, value ] of Object.entries( defaults ) ) {
+			specs[ key as keyof T ] = this.toSpec( key, value );
 		}
-
-		return values;
-
+		return specs;
 	}
 
-	private parseArray( key: string ) {
-
-		const value = this.urlSearchParams.get( key );
-		if ( !value ) return [];
-
-		const repeated = this.urlSearchParams.getAll( key );
-
-		if ( repeated.length > 1 && UrlArgs.arrayMode === 'comma' ) {
-			console.warn( `Repeated array mode detected for ${key}, but comma mode is set` );
-			console.warn( 'Using repeated mode instead' );
-			return repeated;
+	private toSpec( key: string, value: unknown ): Spec<unknown> {
+		if ( isSpec( value ) ) return value;
+		if ( value === undefined ) {
+			throw new Error( `${ key }: use u.optional() to allow undefined` );
 		}
-
-		if ( UrlArgs.arrayMode === 'repeated' ) {
-			return repeated;
+		if ( value === null ) {
+			throw new Error( `${ key }: use u.nullable() to allow null` );
 		}
-
-		return this.parseCommaArray( value );
-
+		if ( typeof value === 'string' ) return u.string( value );
+		if ( typeof value === 'number' ) return u.number( value );
+		if ( typeof value === 'boolean' ) return u.boolean( value );
+		throw new Error( `${ key }: unsupported default value of type ${ typeof value }` );
 	}
 
-	private parseCommaArray( input: string ) {
-		const parts: string[] = [];
-		let current = '';
-		let escaped = false;
+	private resolveValue( params: URLSearchParams, key: string, spec: Spec<unknown> ): unknown {
+		if ( !params.has( key ) ) return spec.defaultValue;
 
-		// unlikely to appear in real text
-		const BACKSLASH_PLACEHOLDER = '\u0000';
-		input = input.replace( /\\\\/g, BACKSLASH_PLACEHOLDER );
-
-		for ( const char of input ) {
-			if ( char === '\\' && !escaped ) {
-				escaped = true;
-			} else if ( char === ',' && !escaped ) {
-				parts.push( current.trim() );
-				current = '';
-			} else {
-				current += char;
-				escaped = false;
-			}
+		if ( spec.kind === 'scalar' ) {
+			const raw = params.get( key )!;
+			if ( spec.validate( raw ) ) return spec.parse( raw );
+			return this.handleInvalid( key, raw, spec.defaultValue );
 		}
 
-		// handle trailing data
-		if ( escaped ) current += '\\';
-		if ( current.length > 0 ) parts.push( current.trim() );
+		const raw = this.collectArray( params, key );
+		if ( spec.validate( raw ) ) return spec.parse( raw );
+		return this.handleInvalid( key, raw.join( ',' ), spec.defaultValue );
+	}
 
-		// restore real backslashes, unescape commas
-		return parts.map( s => s
-			.replace( new RegExp( BACKSLASH_PLACEHOLDER, 'g' ), '\\\\' )
-			.replace( /\\,/g, ',' )
-		);
+	private collectArray( params: URLSearchParams, key: string ): string[] {
+		const repeated = params.getAll( key );
+
+		if ( this.arrayMode === 'repeated' ) return repeated;
+
+		if ( this.arrayMode === 'comma' ) {
+			if ( repeated.length > 1 ) {
+				console.warn(
+					`urlargs: '${ key }' appears multiple times but arrayMode is 'comma'; using repeated values`
+				);
+				return repeated;
+			}
+			return splitComma( repeated[ 0 ] );
+		}
+
+		if ( repeated.length === 1 ) return splitComma( repeated[ 0 ] );
+		return repeated.flatMap( splitComma );
+	}
+
+	private handleInvalid( key: string, raw: string, fallback: unknown ): unknown {
+		const message = `urlargs: invalid value for '${ key }': ${ JSON.stringify( raw ) }`;
+		if ( this.strict ) throw new Error( message );
+		console.warn( message );
+		console.warn( `urlargs: using default value: ${ stringify( fallback ) }` );
+		return fallback;
+	}
+
+	private shallowFreeze( values: Record<keyof T, unknown> ): void {
+		for ( const value of Object.values( values ) ) {
+			if ( Array.isArray( value ) ) Object.freeze( value );
+		}
+		Object.freeze( values );
 	}
 
 	/**
 	 * Print descriptions of the specified URL arguments to the console.
 	 * ```ts
-	 * const args = new UrlArgs( {
-	 *   count: 10,
-	 *   enabled: true,
-	 *   name: 'test',
-	 *   tags: [ 'a', 'b' ]
-	 * } );
-	 *
 	 * args.describe( {
-	 *   count: 'The number of items to display',
+	 *   count:   'The number of items to display',
 	 *   enabled: 'Whether the items are enabled',
-	 *   name: 'The name of the items'
 	 * } );
 	 * ```
 	 */
-	public describe( descriptions: Partial<Record<keyof T, string>> = {} ): void {
-
-		const keys = Object.keys( descriptions );
-
-		for ( const key of keys ) {
-
-			const description = ( descriptions[ key ] || '' ).trim();
-
-			let arg = this.defaults[ key ];
-			let type = Array.isArray( arg ) ? 'string[]' : typeof arg;
-
-			if ( isSpecial( arg ) ) {
-				type = arg.typeLabel;
-				arg = arg.defaultValue;
-			}
-
-			const value = this.values[ key ];
-			const isDefaultValue = value === arg || arraysEqual( arg, value );
-
-			const valueStr = truncate( stringify( value ) );
-			const styles: string[] = [];
-
-			let content = `%c${key}: `;
-			styles.push( 'font-weight: bold' );
-
-			if ( !isDefaultValue ) {
-
-				content += `%c${valueStr}`;
-				styles.push( 'font-weight: bold; color: #f70' );
-
-				content += ` %c${stringify( arg )}`;
-				styles.push( 'color: #a6f7; text-decoration: line-through' );
-
-			} else {
-				content += `%c${valueStr}`;
-				styles.push( 'color: #a6f' );
-			}
-
-			content += `%c · ${type}`;
-			styles.push( 'color: #999' );
-
-			if ( description ) {
-				content += `%c · ${description}`;
-				styles.push( 'color: #ddd' );
-			}
-
-			console.log( content, ...styles );
-
+	describe( descriptions: Partial<Record<keyof T, string>> = {} ): void {
+		for ( const key of Object.keys( descriptions ) as ( keyof T )[] ) {
+			this.describeOne( key, descriptions[ key ] || '' );
 		}
-
 	}
 
 	/**
-	 * Print descriptions of all the URL arguments to the console. Differs from `describe()`
-	 * in that it logs all the available arguments, not just those with descriptions.
+	 * Like `describe()`, but logs all the available arguments, not just those with descriptions.
 	 */
-	public describeAll( descriptions: Partial<Record<keyof T, string>> = {} ): void {
+	describeAll( descriptions: Partial<Record<keyof T, string>> = {} ): void {
 		const all = {} as Record<keyof T, string>;
-		for ( const key of Object.keys( this.defaults ) ) {
-			all[ key as keyof T ] = descriptions[ key ] || '';
+		for ( const key of Object.keys( this.defaults ) as ( keyof T )[] ) {
+			all[ key ] = descriptions[ key ] || '';
 		}
 		this.describe( all );
+	}
+
+	private describeOne( key: keyof T, description: string ): void {
+		const spec = this.specs[ key ];
+		const value = this._values[ key ];
+		const isDefault = value === spec.defaultValue || arraysEqual( value, spec.defaultValue );
+		const valueStr = truncate( stringify( value ) );
+		const styles: string[] = [];
+
+		let content = `%c${ String( key ) }: `;
+		styles.push( 'font-weight: bold' );
+
+		if ( isDefault ) {
+			content += `%c${ valueStr }`;
+			styles.push( 'color: #a6f' );
+		} else {
+			content += `%c${ valueStr }`;
+			styles.push( 'font-weight: bold; color: #f70' );
+			content += ` %c${ stringify( spec.defaultValue ) }`;
+			styles.push( 'color: #a6f7; text-decoration: line-through' );
+		}
+
+		content += `%c · ${ spec.typeLabel }`;
+		styles.push( 'color: #999' );
+
+		if ( description.trim() ) {
+			content += `%c · ${ description.trim() }`;
+			styles.push( 'color: #ddd' );
+		}
+
+		console.log( content, ...styles );
 	}
 
 }
