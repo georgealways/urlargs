@@ -2,6 +2,9 @@ import { expectType } from 'tsd';
 
 import { UrlArgs, u } from './src/index.js';
 
+// ensures examples.ts stays type-correct as the API evolves
+import './examples.js';
+
 type MyJsonType = {
 	a: number;
 	b: number;
@@ -48,13 +51,13 @@ expectType<1 | 2 | 3>( args.values.myOneofNumber );
 expectType<'a' | 'b' | 'c'>( args.values.myOneofWithDefault );
 expectType<MyJsonType>( args.values.myJson );
 
-// @ts-expect-error
+// @ts-expect-error use u.optional() instead
 new UrlArgs( { invalid: undefined } );
-// @ts-expect-error
+// @ts-expect-error use u.nullable() instead
 new UrlArgs( { invalid: null } );
-// @ts-expect-error
+// @ts-expect-error objects are not supported
 new UrlArgs( { invalid: {} } );
-// @ts-expect-error
+// @ts-expect-error symbols are not supported
 new UrlArgs( { invalid: Symbol( 'invalid' ) } );
-// @ts-expect-error
+// @ts-expect-error use u.array() instead
 new UrlArgs( { invalid: [] } );

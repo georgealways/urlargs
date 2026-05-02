@@ -1,15 +1,6 @@
-import { defineConfig } from 'eslint/config';
-import { ts } from 'eslint-config-gmb';
+import tseslint from 'typescript-eslint';
 
-export default defineConfig( [
-	...ts,
-	{
-		files: [ '**/*.ts' ],
-		rules: {
-			'no-redeclare': 'off'
-		}
-	},
-	{
-		ignores: [ 'dist' ]
-	}
-] );
+export default tseslint.config(
+	...tseslint.configs.recommended,
+	{ ignores: [ 'dist' ] }
+);

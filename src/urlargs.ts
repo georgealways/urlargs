@@ -4,11 +4,34 @@ import { isSpec, u } from './spec.js';
 import { arraysEqual, defaultSearch, splitComma, stringify, truncate } from './utils.js';
 
 /**
- * Parses URL query parameters into a typed object.
- * ```ts
- * const args = new UrlArgs( { count: 10, enabled: true, name: 'test' } );
- * const { count, enabled, name } = args.values;
- * ```
+ * Parses URL query parameters into a typed, frozen object.
+ *
+ * Use plain values for primitive defaults. Use the `u` namespace for arrays, optional/nullable,
+ * enums, and JSON.
+ *
+ * @example
+ * import { UrlArgs, u } from 'urlargs';
+ *
+ * const args = new UrlArgs( {
+ *     count:   10,
+ *     enabled: true,
+ *     name:    'test',
+ *     tags:    u.array( [ 'a', 'b' ] ),
+ *     port:    u.optional( u.number() ),
+ *     theme:   u.oneof( [ 'light', 'dark' ] ),
+ * } );
+ *
+ * args.values.count;            // typed, frozen
+ * args.parse( '?count=42' );    // re-parse later
+ * args.describe( { count: 'The number of items' } );
+ *
+ * @example
+ * // constructor options:
+ * new UrlArgs( defaults, {
+ *     search:    '?count=42',  // explicit query string (SSR / tests)
+ *     arrayMode: 'auto',       // 'auto' (default) | 'comma' | 'repeated'
+ *     strict:    false,        // throw on invalid input instead of warning
+ * } );
  */
 export class UrlArgs<T extends Record<string, Default>> {
 
@@ -34,6 +57,9 @@ export class UrlArgs<T extends Record<string, Default>> {
 	/**
 	 * Re-parse values from a query string. Defaults to `window.location.search`.
 	 * Useful for testing and for SPAs that respond to URL changes.
+	 * @example
+	 * args.parse( '?count=42' );
+	 * args.parse();  // reads window.location.search
 	 */
 	parse( search: string = defaultSearch() ): void {
 		const params = new URLSearchParams( search );
@@ -117,12 +143,12 @@ export class UrlArgs<T extends Record<string, Default>> {
 
 	/**
 	 * Print descriptions of the specified URL arguments to the console.
-	 * ```ts
+	 * Only logs keys present in the descriptions object.
+	 * @example
 	 * args.describe( {
-	 *   count:   'The number of items to display',
-	 *   enabled: 'Whether the items are enabled',
+	 *     count:   'The number of items to display',
+	 *     enabled: 'Whether the items are enabled',
 	 * } );
-	 * ```
 	 */
 	describe( descriptions: Partial<Record<keyof T, string>> = {} ): void {
 		for ( const key of Object.keys( descriptions ) as ( keyof T )[] ) {
@@ -131,7 +157,10 @@ export class UrlArgs<T extends Record<string, Default>> {
 	}
 
 	/**
-	 * Like `describe()`, but logs all the available arguments, not just those with descriptions.
+	 * Like `describe()`, but logs every argument, not just those with descriptions.
+	 * @example
+	 * args.describeAll();
+	 * args.describeAll( { count: 'The number of items' } );  // descriptions are optional
 	 */
 	describeAll( descriptions: Partial<Record<keyof T, string>> = {} ): void {
 		const all = {} as Record<keyof T, string>;

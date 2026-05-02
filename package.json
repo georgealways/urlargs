@@ -17,6 +17,8 @@
   "files": [
     "dist",
     "src",
+    "examples.ts",
+    "AGENTS.md",
     "README.md",
     "LICENSE.md"
   ],
@@ -39,10 +41,10 @@
   "devDependencies": {
     "concurrently": "^9.2.0",
     "eslint": "^9.27.0",
-    "eslint-config-gmb": "^0.11.0",
     "jsdom": "^24.0.0",
     "tsd": "^0.32.0",
     "typescript": "^5.4.2",
+    "typescript-eslint": "^8.59.1",
     "vite": "^7.0.2",
     "vitest": "^3.2.4"
   }

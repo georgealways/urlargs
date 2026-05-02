@@ -447,17 +447,17 @@ describe( 'UrlArgs', () => {
 	// ---------------------------------------------------------------------------
 
 	it( 'throws on unsupported defaults', () => {
-		// @ts-expect-error
+		// @ts-expect-error objects are not supported
 		expect( () => new UrlArgs( { foo: {} } ) ).toThrow();
-		// @ts-expect-error
+		// @ts-expect-error symbols are not supported
 		expect( () => new UrlArgs( { foo: Symbol( 'foo' ) } ) ).toThrow();
-		// @ts-expect-error
+		// @ts-expect-error use u.nullable() instead
 		expect( () => new UrlArgs( { foo: null } ) ).toThrow();
-		// @ts-expect-error
+		// @ts-expect-error use u.optional() instead
 		expect( () => new UrlArgs( { foo: undefined } ) ).toThrow();
-		// @ts-expect-error
+		// @ts-expect-error functions are not supported
 		expect( () => new UrlArgs( { foo: () => {} } ) ).toThrow();
-		// @ts-expect-error
+		// @ts-expect-error use u.array() instead
 		expect( () => new UrlArgs( { foo: [] } ) ).toThrow();
 	} );
 
